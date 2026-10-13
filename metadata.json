@@ -1,0 +1,6 @@
+{
+  "name": "JK Mission Nepal",
+  "description": "Smart retail, customer cashback, shopkeeper management, and 3-level referral commission platform for Nepal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
