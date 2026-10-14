@@ -3,6 +3,7 @@ export type UserRole = 'admin' | 'shopkeeper' | 'customer';
 export interface User {
   id: string;
   name: string;
+  email?: string;
   mobile: string; // e.g. "+9779812345678"
   role: UserRole;
   referralId: string; // mobile number with +977

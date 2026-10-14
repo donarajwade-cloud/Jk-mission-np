@@ -245,14 +245,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               {paymentMethod === 'esewa' && (
                 <div>
                   <p className="font-bold text-slate-800">Transfer via eSewa:</p>
-                  <p className="text-slate-600 mt-0.5">eSewa ID: <strong className="font-mono text-emerald-700">9800000000</strong> (JK Mission Nepal Official)</p>
+                  <p className="text-slate-600 mt-0.5">eSewa ID: <strong className="font-mono text-emerald-700">9766133831 / 9815837905</strong> (JK Mission Official)</p>
                   <p className="text-[11px] text-slate-500">Please enter your transaction code / reference ID below after payment.</p>
                 </div>
               )}
               {paymentMethod === 'khalti' && (
                 <div>
                   <p className="font-bold text-slate-800">Transfer via Khalti:</p>
-                  <p className="text-slate-600 mt-0.5">Khalti ID: <strong className="font-mono text-purple-700">9800000000</strong> (JK Mission Nepal Official)</p>
+                  <p className="text-slate-600 mt-0.5">Khalti ID: <strong className="font-mono text-purple-700">9766133831 / 9815837905</strong> (JK Mission Official)</p>
                   <p className="text-[11px] text-slate-500">Please enter your transaction reference ID below after completing transfer.</p>
                 </div>
               )}

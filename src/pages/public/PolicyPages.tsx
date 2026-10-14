@@ -27,7 +27,7 @@ export const PolicyPages: React.FC<PolicyPagesProps> = ({ initialTab = 'terms' }
           Platform Governance & Policies
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          JK Mission Nepal (www.jkmissionnp.com) operates under strict compliance with the laws of Nepal.
+          JK Mission (https://jkmission.np.com) operates under strict compliance with the laws of Nepal.
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export const PolicyPages: React.FC<PolicyPagesProps> = ({ initialTab = 'terms' }
           <div className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">1. Terms and Conditions of Service</h2>
             <p>
-              Welcome to <strong>JK Mission Nepal</strong> (&quot;the Platform&quot;), operated at <strong>www.jkmissionnp.com</strong>. By creating an account as a customer or shopkeeper, you agree to be bound by these Terms and Conditions governed under the laws of Nepal.
+              Welcome to <strong>JK Mission</strong> (&quot;the Platform&quot;), operated at <strong>https://jkmission.np.com</strong>. By creating an account as a customer or shopkeeper, you agree to be bound by these Terms and Conditions governed under the laws of Nepal.
             </p>
             <h3 className="font-bold text-slate-800 text-sm">A. Nature of Platform</h3>
             <p>

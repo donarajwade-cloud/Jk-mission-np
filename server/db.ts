@@ -61,16 +61,17 @@ function persistDb() {
 }
 
 function initDefaultSeed(): DatabaseSchema {
-  const adminPassHash = bcrypt.hashSync('Admin@123JK', 10);
+  const adminPassHash = bcrypt.hashSync('Admin123@', 10);
   const shopkeeperPassHash = bcrypt.hashSync('Shopkeeper@123', 10);
   const customerPassHash = bcrypt.hashSync('Customer@123', 10);
 
   const adminUser: User = {
     id: 'user_admin_1',
     name: 'JK Mission Administrator',
-    mobile: '+9779800000000',
+    email: 'jk5172794@gmail.com',
+    mobile: '+9779766133831',
     role: 'admin',
-    referralId: '+9779800000000',
+    referralId: '+9779766133831',
     status: 'active',
     createdAt: new Date().toISOString()
   };
@@ -415,10 +416,10 @@ function initDefaultSeed(): DatabaseSchema {
       }
     ],
     systemSettings: {
-      websiteName: 'JK Mission Nepal',
-      websiteUrl: 'https://www.jkmissionnp.com',
-      contactEmail: 'support@jkmissionnp.com',
-      contactPhone: '+977-1-4220000',
+      websiteName: 'JK Mission',
+      websiteUrl: 'https://jkmission.np.com',
+      contactEmail: 'jk5172794@gmail.com',
+      contactPhone: '+9779766133831 / +9779815837905',
       address: 'New Road, Kathmandu, Nepal',
       currency: 'NPR',
       timezone: 'Asia/Kathmandu',
@@ -442,6 +443,46 @@ export function loadDatabase(): DatabaseSchema {
     try {
       const content = fs.readFileSync(DB_FILE, 'utf-8');
       dbState = JSON.parse(content);
+
+      // Ensure Master Admin has current email and mobile
+      let migrated = false;
+      const admin = dbState.users.find(u => u.role === 'admin' || u.id === 'user_admin_1');
+      if (admin) {
+        if (admin.email !== 'jk5172794@gmail.com') {
+          admin.email = 'jk5172794@gmail.com';
+          migrated = true;
+        }
+        if (admin.mobile === '+9779800000000') {
+          admin.mobile = '+9779766133831';
+          admin.referralId = '+9779766133831';
+          migrated = true;
+        }
+      }
+      if (dbState.systemSettings) {
+        if (dbState.systemSettings.contactEmail === 'support@jkmissionnp.com') {
+          dbState.systemSettings.contactEmail = 'jk5172794@gmail.com';
+          migrated = true;
+        }
+        if (dbState.systemSettings.contactPhone === '+977-1-4220000') {
+          dbState.systemSettings.contactPhone = '+9779766133831 / +9779815837905';
+          migrated = true;
+        }
+        if (dbState.systemSettings.websiteUrl === 'https://www.jkmissionnp.com') {
+          dbState.systemSettings.websiteUrl = 'https://jkmission.np.com';
+          migrated = true;
+        }
+      }
+      if (dbState.passwords) {
+        const currentAdminHash = dbState.passwords['user_admin_1'];
+        if (!currentAdminHash || !bcrypt.compareSync('Admin123@', currentAdminHash)) {
+          dbState.passwords['user_admin_1'] = bcrypt.hashSync('Admin123@', 10);
+          migrated = true;
+        }
+      }
+      if (migrated) {
+        persistDb();
+      }
+
       return dbState;
     } catch (e) {
       console.warn('Failed to parse database file, resetting to seed:', e);

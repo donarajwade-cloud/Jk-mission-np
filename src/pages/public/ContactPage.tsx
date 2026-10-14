@@ -43,16 +43,23 @@ export const ContactPage: React.FC = () => {
             <div className="flex items-start space-x-3">
               <Phone className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-slate-900 block">Phone Support:</strong>
-                <span>+977-1-4220000 / +977 9800000000</span>
+                <strong className="text-slate-900 block">Support Contact Numbers:</strong>
+                <div className="space-y-0.5 font-mono">
+                  <div>
+                    <a href="tel:+9779766133831" className="text-amber-800 hover:underline">+977 9766133831</a>
+                  </div>
+                  <div>
+                    <a href="tel:+9779815837905" className="text-amber-800 hover:underline">+977 9815837905</a>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="flex items-start space-x-3">
               <Mail className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-slate-900 block">Official Email:</strong>
-                <span>support@jkmissionnp.com • admin@jkmissionnp.com</span>
+                <strong className="text-slate-900 block">Official Support Email:</strong>
+                <a href="mailto:jk5172794@gmail.com" className="font-mono text-amber-800 hover:underline">jk5172794@gmail.com</a>
               </div>
             </div>
 
@@ -66,8 +73,10 @@ export const ContactPage: React.FC = () => {
           </div>
 
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-            <strong>Portal Website: </strong>
-            <span className="font-mono">www.jkmissionnp.com</span>
+            <strong>Official Website: </strong>
+            <a href="https://jkmission.np.com" target="_blank" rel="noopener noreferrer" className="font-mono underline font-bold">
+              https://jkmission.np.com
+            </a>
           </div>
         </div>
 

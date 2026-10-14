@@ -99,7 +99,7 @@ function MainApp() {
         <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 font-black text-xl flex items-center justify-center animate-pulse">
           JK
         </div>
-        <p className="text-xs font-bold text-slate-600">Loading JK Mission Nepal...</p>
+        <p className="text-xs font-bold text-slate-600">Loading JK Mission...</p>
       </div>
     );
   }
@@ -153,6 +153,7 @@ function MainApp() {
       case 'login':
         return (
           <LoginPage
+            initialRole={viewParam as 'customer' | 'shopkeeper' | 'admin' | undefined}
             onLoginSuccess={() => {
               if (role === 'admin') navigateTo('admin-dashboard');
               else if (role === 'shopkeeper') navigateTo('shopkeeper-dashboard');

@@ -25,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
               JK
             </div>
             <span className="font-bold text-slate-200">
-              JK Mission Nepal
+              JK Mission
             </span>
             <span className="text-slate-600">•</span>
             <span className="text-amber-400 font-semibold capitalize">
@@ -37,7 +37,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
             <span>•</span>
             <span>15-Day Settlement Cycle</span>
             <span>•</span>
-            <span>© {new Date().getFullYear()} JK Mission Nepal</span>
+            <span>© {new Date().getFullYear()} JK Mission</span>
           </div>
         </div>
       </footer>
@@ -55,10 +55,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
             </div>
             <div>
               <p className="font-extrabold text-slate-950 text-sm sm:text-base leading-tight">
-                JK Mission Nepal — Smart Retail Network
+                JK Mission — Smart Retail Network
               </p>
               <p className="text-[11px] text-slate-900 font-semibold">
-                Official Portal: www.jkmissionnp.com • Kathmandu, Nepal (+977)
+                Smart Retail, Cashback & Referral Platform • Currency: NPR (रु)
               </p>
             </div>
           </div>
@@ -87,10 +87,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
               <span className="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-sm">
                 JK
               </span>
-              <span className="text-white font-extrabold text-lg">JK Mission Nepal</span>
+              <span className="text-white font-extrabold text-lg">JK Mission</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              Discover products from verified participating shops in Nepal, receive eligible cashback on purchases, and earn transparent referral commissions from qualifying product sales under the platform&apos;s published rules.
+              Discover authentic products from verified participating shops, receive eligible cashback on purchases, and earn transparent referral commissions under the platform&apos;s published rules.
             </p>
             <div className="space-y-1.5 text-xs text-slate-300 pt-1">
               <div className="flex items-center space-x-2">
@@ -99,11 +99,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>+977-1-4220000 / +977 9800000000</span>
+                <span>
+                  <a href="tel:+9779766133831" className="hover:text-amber-300 transition-colors">+977 9766133831</a> / <a href="tel:+9779815837905" className="hover:text-amber-300 transition-colors">+977 9815837905</a>
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>support@jkmissionnp.com</span>
+                <a href="mailto:jk5172794@gmail.com" className="hover:text-amber-300 transition-colors font-mono">
+                  jk5172794@gmail.com
+                </a>
               </div>
             </div>
             <div className="pt-2">
@@ -319,15 +323,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
         {/* Ethical Disclaimer */}
         <div className="mt-8 p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-400 leading-normal">
           <strong className="text-amber-400 font-bold">Important Notice: </strong>
-          JK Mission Nepal does not guarantee fixed earnings or investment returns. All cashback and 3-level referral commissions are earned solely upon the purchase and verified completion of eligible physical/retail products sold by participating merchants. Inviting members or account registration alone does not generate commission.
+          JK Mission does not guarantee fixed earnings or investment returns. All cashback and 3-level referral commissions are earned solely upon the purchase and verified completion of eligible physical/retail products sold by participating merchants. Inviting members or account registration alone does not generate commission.
         </div>
 
         {/* Copyright */}
         <div className="mt-6 pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 text-center sm:text-left">
-          <p>© {new Date().getFullYear()} JK Mission Nepal (www.jkmissionnp.com). All rights reserved.</p>
+          <p>© {new Date().getFullYear()} JK Mission. All rights reserved.</p>
           <p className="flex items-center justify-center sm:justify-end space-x-1">
-            <span>Built for the people of Nepal</span>
-            <Heart className="w-3.5 h-3.5 text-red-500 inline fill-red-500" />
+            <span>Official Smart Retail & Cashback Platform</span>
           </p>
         </div>
       </div>

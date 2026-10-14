@@ -53,12 +53,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black text-sm">
                   JK
                 </div>
-                <h1 className="text-xl font-black text-slate-900">JK Mission Nepal</h1>
+                <h1 className="text-xl font-black text-slate-900">JK Mission</h1>
               </div>
               <p className="text-xs text-slate-500">Smart Retail & Cashback Platform</p>
-              <p className="text-xs text-slate-500">Website: www.jkmissionnp.com</p>
+              <p className="text-xs text-slate-500">Website: https://jkmission.np.com</p>
               <p className="text-xs text-slate-500">New Road, Kathmandu, Nepal</p>
-              <p className="text-xs text-slate-500">support@jkmissionnp.com • +977-1-4220000</p>
+              <p className="text-xs text-slate-500">jk5172794@gmail.com • +977 9766133831 / +977 9815837905</p>
             </div>
             <div className="text-right">
               <span className="inline-block px-3 py-1 rounded-lg bg-amber-100 text-amber-900 font-extrabold text-xs tracking-wider uppercase mb-2">
@@ -191,7 +191,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
           {/* Footer note */}
           <div className="border-t border-slate-200 pt-4 text-center text-[10px] text-slate-400">
-            <p>Thank you for shopping through JK Mission Nepal (www.jkmissionnp.com).</p>
+            <p>Thank you for shopping through JK Mission (https://jkmission.np.com).</p>
             <p>All items are sold by independent registered participating shops in Nepal.</p>
           </div>
         </div>

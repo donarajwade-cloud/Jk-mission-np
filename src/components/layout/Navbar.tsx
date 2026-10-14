@@ -40,10 +40,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     currentView.startsWith('customer-');
 
   const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'products', label: 'Products', icon: ShoppingBag },
-    { id: 'shops', label: 'Participating Shops', icon: Store },
-    { id: 'how-it-works', label: 'How It Works', icon: Layers },
+    { id: 'home', label: 'Store', icon: ShoppingBag },
+    { id: 'products', label: 'All Products' },
+    { id: 'shops', label: 'Shops', icon: Store },
     { id: 'cashback', label: 'Cashback Info', icon: Award },
     { id: 'referral', label: '3-Level Referral', icon: Users }
   ];
@@ -98,8 +97,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </nav>
 
-          {/* Right Action Icons */}
-          <div className="flex items-center space-x-2">
+          {/* Right Action Icons & Auth */}
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            {/* Become a Shopkeeper Button */}
+            {(!user || role === 'customer') && (
+              <button
+                onClick={() => onNavigate('register-shopkeeper')}
+                className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100/80 text-amber-950 border border-amber-300 transition-all shadow-2xs"
+                title="Register your store on JK Mission"
+              >
+                <Store className="w-3.5 h-3.5 text-amber-700" />
+                <span>Become a Shopkeeper</span>
+              </button>
+            )}
+
             {/* Cart Button */}
             <button
               onClick={onOpenCart}
@@ -130,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Auth / Dashboard Buttons */}
+            {/* Auth Buttons / Dropdown */}
             {user ? (
               <div className="flex items-center space-x-2">
                 {!isPanelRoute ? (
@@ -142,7 +153,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }}
                     className="hidden sm:inline-flex items-center space-x-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black px-3 py-1.5 rounded-xl text-xs transition-all shadow-xs"
                   >
-                    <span>{role === 'admin' ? 'Admin Portal' : role === 'shopkeeper' ? 'Shopkeeper Panel' : 'My Dashboard'}</span>
+                    <span>
+                      {role === 'admin'
+                        ? 'Admin Portal'
+                        : role === 'shopkeeper'
+                        ? 'Shopkeeper Hub'
+                        : 'My Dashboard'}
+                    </span>
                   </button>
                 ) : (
                   <button
@@ -152,184 +169,193 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>Visit Store</span>
                   </button>
                 )}
+
+                {/* User Dropdown */}
                 <div className="relative">
-                <button
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center space-x-2 bg-amber-50 border border-amber-200/80 hover:bg-amber-100/70 text-slate-900 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all shadow-xs"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-xs uppercase">
-                    {user.name.charAt(0)}
-                  </div>
-                  <div className="hidden md:block text-left">
-                    <div className="text-xs font-bold leading-tight truncate max-w-[110px]">
-                      {user.name}
-                    </div>
-                    <div className="text-[10px] text-amber-700 capitalize font-medium">
-                      {role}
-                    </div>
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-                </button>
-
-                {/* Dropdown Menu */}
-                {userDropdownOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-                    onClick={() => setUserDropdownOpen(false)}
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center space-x-2 bg-amber-50 border border-amber-200/80 hover:bg-amber-100/70 text-slate-900 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all shadow-xs"
                   >
-                    <div className="px-4 py-2 border-b border-slate-100">
-                      <p className="text-xs text-slate-500 font-medium">Signed in as</p>
-                      <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
-                      <p className="text-xs font-mono text-slate-500">{user.mobile}</p>
-                      <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900">
-                        {role} account
-                      </span>
+                    <div className="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-xs uppercase">
+                      {user.name.charAt(0)}
                     </div>
-
-                    {/* Role specific link */}
-                    <div className="p-1">
-                      {role === 'customer' && (
-                        <>
-                          <button
-                            onClick={() => onNavigate('customer-dashboard')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium flex items-center justify-between"
-                          >
-                            <span>Customer Dashboard</span>
-                            <span className="text-xs font-bold text-amber-600 bg-amber-100/60 px-1.5 py-0.5 rounded">
-                              Hub
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => onNavigate('customer-wallets')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium flex items-center justify-between"
-                          >
-                            <span>Wallets & Cashback</span>
-                            <span className="text-xs font-semibold text-emerald-600">
-                              {customerWallet ? formatNPR(customerWallet.cashbackAvailableNpr) : ''}
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => onNavigate('customer-referrals')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            3-Level Referral Team
-                          </button>
-                          <button
-                            onClick={() => onNavigate('customer-orders')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            My Orders & Invoices
-                          </button>
-                        </>
-                      )}
-
-                      {role === 'shopkeeper' && (
-                        <>
-                          <button
-                            onClick={() => onNavigate('shopkeeper-dashboard')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium flex items-center justify-between"
-                          >
-                            <span>Shopkeeper Dashboard</span>
-                            <span className="text-xs font-bold text-amber-700 bg-amber-100/60 px-1.5 py-0.5 rounded">
-                              Shop
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => onNavigate('shopkeeper-products')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Submit & View Products
-                          </button>
-                          <button
-                            onClick={() => onNavigate('shopkeeper-inventory')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Inventory & Low Stock
-                          </button>
-                          <button
-                            onClick={() => onNavigate('shopkeeper-orders')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Orders & Sales
-                          </button>
-                          <button
-                            onClick={() => onNavigate('shopkeeper-wallet')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Commission Wallet
-                          </button>
-                        </>
-                      )}
-
-                      {role === 'admin' && (
-                        <>
-                          <button
-                            onClick={() => onNavigate('admin-dashboard')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-bold flex items-center justify-between"
-                          >
-                            <span>Admin Portal</span>
-                            <ShieldCheck className="w-4 h-4 text-amber-600" />
-                          </button>
-                          <button
-                            onClick={() => onNavigate('admin-products')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Product Approvals & Commissions
-                          </button>
-                          <button
-                            onClick={() => onNavigate('admin-customers')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Customer Network & Trees
-                          </button>
-                          <button
-                            onClick={() => onNavigate('admin-shopkeepers')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Shopkeeper Approvals
-                          </button>
-                          <button
-                            onClick={() => onNavigate('admin-withdrawals')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Withdrawals & 15-Day Settlements
-                          </button>
-                          <button
-                            onClick={() => onNavigate('admin-ledgers')}
-                            className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
-                          >
-                            Financial Ledgers & Reports
-                          </button>
-                        </>
-                      )}
+                    <div className="hidden md:block text-left">
+                      <div className="text-xs font-bold leading-tight truncate max-w-[110px]">
+                        {user.name}
+                      </div>
+                      <div className="text-[10px] text-amber-700 capitalize font-medium">
+                        {role}
+                      </div>
                     </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  </button>
 
-                    <div className="border-t border-slate-100 p-1">
-                      <button
-                        onClick={logout}
-                        className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 font-medium flex items-center space-x-2"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Sign Out</span>
-                      </button>
+                  {/* Dropdown Menu */}
+                  {userDropdownOpen && (
+                    <div
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <div className="px-4 py-2 border-b border-slate-100">
+                        <p className="text-xs text-slate-500 font-medium">Signed in as</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
+                        <p className="text-xs font-mono text-slate-500">{user.mobile}</p>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900">
+                          {role} account
+                        </span>
+                      </div>
+
+                      {/* Role specific links */}
+                      <div className="p-1">
+                        {role === 'customer' && (
+                          <>
+                            <button
+                              onClick={() => onNavigate('customer-dashboard')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium flex items-center justify-between"
+                            >
+                              <span>Customer Dashboard</span>
+                              <span className="text-xs font-bold text-amber-600 bg-amber-100/60 px-1.5 py-0.5 rounded">
+                                Hub
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => onNavigate('customer-wallets')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium flex items-center justify-between"
+                            >
+                              <span>Wallets & Cashback</span>
+                              <span className="text-xs font-semibold text-emerald-600">
+                                {customerWallet ? formatNPR(customerWallet.cashbackAvailableNpr) : ''}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => onNavigate('customer-referrals')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              3-Level Referral Team
+                            </button>
+                            <button
+                              onClick={() => onNavigate('customer-orders')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              My Orders & Invoices
+                            </button>
+                            <button
+                              onClick={() => onNavigate('register-shopkeeper')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100/80 flex items-center space-x-1.5 mt-1"
+                            >
+                              <Store className="w-3.5 h-3.5 text-amber-700" />
+                              <span>Register as Shopkeeper</span>
+                            </button>
+                          </>
+                        )}
+
+                        {role === 'shopkeeper' && (
+                          <>
+                            <button
+                              onClick={() => onNavigate('shopkeeper-dashboard')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium flex items-center justify-between"
+                            >
+                              <span>Shopkeeper Dashboard</span>
+                              <span className="text-xs font-bold text-amber-700 bg-amber-100/60 px-1.5 py-0.5 rounded">
+                                Shop
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => onNavigate('shopkeeper-products')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Submit & View Products
+                            </button>
+                            <button
+                              onClick={() => onNavigate('shopkeeper-inventory')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Inventory & Stock
+                            </button>
+                            <button
+                              onClick={() => onNavigate('shopkeeper-orders')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Orders & Sales
+                            </button>
+                            <button
+                              onClick={() => onNavigate('shopkeeper-wallet')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Commission Wallet
+                            </button>
+                          </>
+                        )}
+
+                        {role === 'admin' && (
+                          <>
+                            <button
+                              onClick={() => onNavigate('admin-dashboard')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-bold flex items-center justify-between"
+                            >
+                              <span>Admin Portal</span>
+                              <ShieldCheck className="w-4 h-4 text-amber-600" />
+                            </button>
+                            <button
+                              onClick={() => onNavigate('admin-products')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Product Approvals
+                            </button>
+                            <button
+                              onClick={() => onNavigate('admin-customers')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Customer Network
+                            </button>
+                            <button
+                              onClick={() => onNavigate('admin-shopkeepers')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Shopkeeper Approvals
+                            </button>
+                            <button
+                              onClick={() => onNavigate('admin-withdrawals')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Withdrawals & Settlements
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="border-t border-slate-100 p-1">
+                        <button
+                          onClick={logout}
+                          className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 font-medium flex items-center space-x-2"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                {/* Dedicated Shopkeeper Login */}
                 <button
-                  onClick={() => onNavigate('login')}
-                  className="px-3 py-1.5 rounded-xl text-sm font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                  onClick={() => onNavigate('login', 'shopkeeper')}
+                  className="hidden sm:inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors"
+                  title="Shopkeeper Merchant Login"
                 >
-                  Log In
+                  <Store className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Shopkeeper Login</span>
                 </button>
+
+                {/* Dedicated User / Customer Login */}
                 <button
-                  onClick={() => onNavigate('register-customer')}
-                  className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-sm transition-all shadow-xs hover:shadow-md"
+                  onClick={() => onNavigate('login', 'customer')}
+                  className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black px-3.5 py-1.5 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1.5"
                 >
-                  Join Free
+                  <UserIcon className="w-3.5 h-3.5" />
+                  <span>User Login</span>
                 </button>
               </div>
             )}
@@ -368,30 +394,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
               <button
                 onClick={() => {
-                  onNavigate('login');
+                  onNavigate('login', 'customer');
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-2.5 rounded-xl text-sm font-bold border border-slate-300 text-slate-800 text-center"
+                className="w-full py-2.5 rounded-xl text-sm font-black bg-amber-400 text-slate-950 text-center flex items-center justify-center space-x-1.5 shadow-xs"
               >
-                Log In
+                <UserIcon className="w-4 h-4" />
+                <span>User Login</span>
               </button>
+
               <button
                 onClick={() => {
-                  onNavigate('register-customer');
+                  onNavigate('login', 'shopkeeper');
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-2.5 rounded-xl text-sm font-bold bg-amber-400 text-slate-950 text-center"
+                className="w-full py-2.5 rounded-xl text-sm font-bold border-2 border-slate-200 text-slate-800 text-center flex items-center justify-center space-x-1.5"
               >
-                Join as Customer
+                <Store className="w-4 h-4 text-blue-600" />
+                <span>Shopkeeper Login</span>
               </button>
+
               <button
                 onClick={() => {
                   onNavigate('register-shopkeeper');
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 text-center"
+                className="w-full py-2 rounded-xl text-xs font-bold text-amber-950 bg-amber-50 border border-amber-300 text-center flex items-center justify-center space-x-1"
               >
-                Register as Shopkeeper
+                <Store className="w-3.5 h-3.5 text-amber-700" />
+                <span>Become a Shopkeeper</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onNavigate('register-customer');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 text-center"
+              >
+                New Customer? Create Account
               </button>
             </div>
           ) : (
@@ -421,12 +462,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </button>
                   <button
                     onClick={() => {
-                      onNavigate('customer-referrals');
+                      onNavigate('customer-orders');
                       setMobileMenuOpen(false);
                     }}
                     className="py-2 px-3 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold text-center"
                   >
-                    3-Level Referral
+                    My Orders
                   </button>
                 </div>
               )}

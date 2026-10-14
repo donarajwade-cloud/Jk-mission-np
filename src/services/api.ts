@@ -72,10 +72,15 @@ export const api = {
       body: JSON.stringify(payload)
     }),
 
-  login: (payload: { mobile: string; password: string }) =>
+  login: (payload: { mobile?: string; email?: string; identifier?: string; password: string }) =>
     request<{ success: boolean; token: string; user: User }>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        identifier: payload.identifier || payload.email || payload.mobile,
+        email: payload.email || payload.identifier,
+        mobile: payload.mobile || payload.identifier,
+        password: payload.password
+      })
     }),
 
   getMe: () =>

@@ -1,0 +1,371 @@
+{
+  "users": [
+    {
+      "id": "user_admin_1",
+      "name": "JK Mission Administrator",
+      "email": "jk5172794@gmail.com",
+      "mobile": "+9779766133831",
+      "role": "admin",
+      "referralId": "+9779766133831",
+      "status": "active",
+      "createdAt": "2026-10-14T00:59:46.288Z"
+    },
+    {
+      "id": "user_shop_1",
+      "name": "Suman Tamang",
+      "mobile": "+9779811111111",
+      "role": "shopkeeper",
+      "referralId": "+9779811111111",
+      "status": "active",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "user_cust_1",
+      "name": "Aarav Shrestha",
+      "mobile": "+9779822222222",
+      "role": "customer",
+      "referralId": "+9779822222222",
+      "status": "active",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "user_cust_2",
+      "name": "Pooja Thapa",
+      "mobile": "+9779833333333",
+      "role": "customer",
+      "referralId": "+9779833333333",
+      "sponsorReferralId": "+9779822222222",
+      "status": "active",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "user_cust_3",
+      "name": "Bikash Adhikari",
+      "mobile": "+9779844444444",
+      "role": "customer",
+      "referralId": "+9779844444444",
+      "sponsorReferralId": "+9779833333333",
+      "status": "active",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    }
+  ],
+  "passwords": {
+    "user_admin_1": "$2b$10$XxcPnCBLc8JzRlRRP.6sve6yTr4mHmxTtV03FNv/UxC.hiJCCkeNS",
+    "user_shop_1": "$2b$10$zusmaOKxk9Kxw55pzJAy8uB24BJUX.mFy4Gjg692PaxSE9Znokk2i",
+    "user_cust_1": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W",
+    "user_cust_2": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W",
+    "user_cust_3": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W"
+  },
+  "customers": [
+    {
+      "id": "cust_prof_1",
+      "userId": "user_cust_1",
+      "fullName": "Aarav Shrestha",
+      "mobile": "+9779822222222",
+      "referralId": "+9779822222222",
+      "city": "Kathmandu",
+      "district": "Kathmandu",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "cust_prof_2",
+      "userId": "user_cust_2",
+      "fullName": "Pooja Thapa",
+      "mobile": "+9779833333333",
+      "referralId": "+9779833333333",
+      "sponsorReferralId": "+9779822222222",
+      "city": "Pokhara",
+      "district": "Kaski",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "cust_prof_3",
+      "userId": "user_cust_3",
+      "fullName": "Bikash Adhikari",
+      "mobile": "+9779844444444",
+      "referralId": "+9779844444444",
+      "sponsorReferralId": "+9779833333333",
+      "city": "Lalitpur",
+      "district": "Lalitpur",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    }
+  ],
+  "shopkeepers": [
+    {
+      "id": "sk_prof_1",
+      "userId": "user_shop_1",
+      "fullName": "Suman Tamang",
+      "mobile": "+9779811111111",
+      "shopName": "Himalayan Organic & Retail Hub",
+      "shopAddress": "New Road, Ward No. 22",
+      "district": "Kathmandu",
+      "municipality": "Kathmandu Metropolitan",
+      "panOrVatNumber": "601234987",
+      "status": "approved",
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    }
+  ],
+  "shops": [
+    {
+      "id": "shop_1",
+      "shopkeeperId": "sk_prof_1",
+      "shopkeeperUserId": "user_shop_1",
+      "name": "Himalayan Organic & Retail Hub",
+      "address": "New Road, Ward No. 22",
+      "district": "Kathmandu",
+      "municipality": "Kathmandu Metropolitan",
+      "phone": "+9779811111111",
+      "description": "Premier supplier of authentic Nepali teas, spices, handicrafts, and daily organic grocery essentials.",
+      "rating": 4.9,
+      "featured": true,
+      "isOpen": true,
+      "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod_1",
+      "shopId": "shop_1",
+      "shopName": "Himalayan Organic & Retail Hub",
+      "shopkeeperUserId": "user_shop_1",
+      "name": "Ilam Orthodox Green Tea (250g)",
+      "description": "Hand-picked first flush organic green tea from high-altitude tea gardens of Ilam, Eastern Nepal. Rich in antioxidants and floral aroma.",
+      "category": "Organic & Food",
+      "costPriceNpr": 320,
+      "proposedSellingPriceNpr": 550,
+      "finalSellingPriceNpr": 550,
+      "stockQuantity": 45,
+      "lowStockThreshold": 10,
+      "sku": "ILAM-TEA-250",
+      "imageUrl": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80",
+      "specifications": {
+        "Origin": "Ilam, Nepal",
+        "Weight": "250g",
+        "Grade": "First Flush Super Fine"
+      },
+      "status": "approved",
+      "commissionSettings": {
+        "customerCashbackType": "fixed",
+        "customerCashbackValue": 35,
+        "referralPoolType": "fixed",
+        "referralPoolValue": 60,
+        "level1Percentage": 50,
+        "level2Percentage": 30,
+        "level3Percentage": 20,
+        "shopkeeperCommissionType": "fixed",
+        "shopkeeperCommissionValue": 40,
+        "companyShareNpr": 75,
+        "permittedExpensesNpr": 20
+      },
+      "createdAt": "2026-10-14T00:59:46.289Z",
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "prod_2",
+      "shopId": "shop_1",
+      "shopName": "Himalayan Organic & Retail Hub",
+      "shopkeeperUserId": "user_shop_1",
+      "name": "Pure Mustang Apple Dried Slices (500g)",
+      "description": "Naturally sun-dried sweet and tangy organic apples from Marpha, Mustang. No added sugar or artificial preservatives.",
+      "category": "Snacks & Organic",
+      "costPriceNpr": 450,
+      "proposedSellingPriceNpr": 780,
+      "finalSellingPriceNpr": 780,
+      "stockQuantity": 30,
+      "lowStockThreshold": 8,
+      "sku": "MUST-APP-500",
+      "imageUrl": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=600&q=80",
+      "specifications": {
+        "Origin": "Mustang, Nepal",
+        "Weight": "500g",
+        "Sugar": "0% Added"
+      },
+      "status": "approved",
+      "commissionSettings": {
+        "customerCashbackType": "fixed",
+        "customerCashbackValue": 50,
+        "referralPoolType": "fixed",
+        "referralPoolValue": 90,
+        "level1Percentage": 50,
+        "level2Percentage": 30,
+        "level3Percentage": 20,
+        "shopkeeperCommissionType": "fixed",
+        "shopkeeperCommissionValue": 60,
+        "companyShareNpr": 100,
+        "permittedExpensesNpr": 30
+      },
+      "createdAt": "2026-10-14T00:59:46.289Z",
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "prod_3",
+      "shopId": "shop_1",
+      "shopName": "Himalayan Organic & Retail Hub",
+      "shopkeeperUserId": "user_shop_1",
+      "name": "Authentic Nepali Chyangra Pashmina Shawl",
+      "description": "Ultra-soft handwoven high mountain cashmere pashmina shawl with traditional fringes. Verified Nepal Chyangra hallmark.",
+      "category": "Apparel & Handicrafts",
+      "costPriceNpr": 2200,
+      "proposedSellingPriceNpr": 3800,
+      "finalSellingPriceNpr": 3800,
+      "stockQuantity": 18,
+      "lowStockThreshold": 5,
+      "sku": "PASH-CHY-01",
+      "imageUrl": "https://images.unsplash.com/photo-1607522370275-f14206abe5d3?auto=format&fit=crop&w=600&q=80",
+      "specifications": {
+        "Material": "100% Chyangra Cashmere",
+        "Size": "200x70 cm",
+        "Craft": "Handloom"
+      },
+      "status": "approved",
+      "commissionSettings": {
+        "customerCashbackType": "fixed",
+        "customerCashbackValue": 250,
+        "referralPoolType": "fixed",
+        "referralPoolValue": 400,
+        "level1Percentage": 50,
+        "level2Percentage": 30,
+        "level3Percentage": 20,
+        "shopkeeperCommissionType": "fixed",
+        "shopkeeperCommissionValue": 300,
+        "companyShareNpr": 500,
+        "permittedExpensesNpr": 150
+      },
+      "createdAt": "2026-10-14T00:59:46.289Z",
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "prod_4",
+      "shopId": "shop_1",
+      "shopName": "Himalayan Organic & Retail Hub",
+      "shopkeeperUserId": "user_shop_1",
+      "name": "Handcrafted Himalayan Singly Singing Bowl",
+      "description": "Traditional 7-metal hand-hammered meditation bowl tuned to heart chakra with wooden striker and silk cushion.",
+      "category": "Handicrafts",
+      "costPriceNpr": 1200,
+      "proposedSellingPriceNpr": 2100,
+      "finalSellingPriceNpr": 2100,
+      "stockQuantity": 12,
+      "lowStockThreshold": 3,
+      "sku": "SING-BOWL-MED",
+      "imageUrl": "https://images.unsplash.com/photo-1519750157634-b6d493a0f77c?auto=format&fit=crop&w=600&q=80",
+      "status": "pending_approval",
+      "createdAt": "2026-10-14T00:59:46.289Z",
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    }
+  ],
+  "orders": [],
+  "cashbackLedger": [],
+  "referralLedger": [],
+  "shopkeeperLedger": [],
+  "customerWallets": {
+    "user_cust_1": {
+      "userId": "user_cust_1",
+      "cashbackAvailableNpr": 140,
+      "cashbackPendingNpr": 0,
+      "cashbackTotalEarnedNpr": 140,
+      "incomeAvailableNpr": 285,
+      "incomePendingNpr": 0,
+      "incomeTotalEarnedNpr": 285,
+      "incomeTotalWithdrawnNpr": 0,
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    },
+    "user_cust_2": {
+      "userId": "user_cust_2",
+      "cashbackAvailableNpr": 50,
+      "cashbackPendingNpr": 0,
+      "cashbackTotalEarnedNpr": 50,
+      "incomeAvailableNpr": 90,
+      "incomePendingNpr": 0,
+      "incomeTotalEarnedNpr": 90,
+      "incomeTotalWithdrawnNpr": 0,
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    },
+    "user_cust_3": {
+      "userId": "user_cust_3",
+      "cashbackAvailableNpr": 0,
+      "cashbackPendingNpr": 0,
+      "cashbackTotalEarnedNpr": 0,
+      "incomeAvailableNpr": 0,
+      "incomePendingNpr": 0,
+      "incomeTotalEarnedNpr": 0,
+      "incomeTotalWithdrawnNpr": 0,
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    }
+  },
+  "shopkeeperWallets": {
+    "user_shop_1": {
+      "userId": "user_shop_1",
+      "availableCommissionNpr": 420,
+      "pendingCommissionNpr": 0,
+      "totalEarnedNpr": 420,
+      "totalWithdrawnNpr": 0,
+      "updatedAt": "2026-10-14T00:59:46.289Z"
+    }
+  },
+  "withdrawals": [
+    {
+      "id": "wdr_sample_1",
+      "userId": "user_cust_1",
+      "userRole": "customer",
+      "userName": "Aarav Shrestha",
+      "userMobile": "+9779822222222",
+      "amountNpr": 150,
+      "paymentMethod": "esewa",
+      "accountDetails": {
+        "accountNumberOrId": "9822222222",
+        "accountHolderName": "Aarav Shrestha"
+      },
+      "status": "pending",
+      "requestedAt": "2026-10-13T00:59:46.289Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif_1",
+      "recipientUserId": "user_admin_1",
+      "title": "Product Awaiting Approval",
+      "message": "Himalayan Organic & Retail Hub submitted a new product: Handcrafted Himalayan Singly Singing Bowl",
+      "type": "product",
+      "read": false,
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "notif_2",
+      "recipientUserId": "user_cust_1",
+      "title": "Welcome to JK Mission Nepal",
+      "message": "Your account is verified. Your unique Referral ID is +9779822222222.",
+      "type": "system",
+      "read": false,
+      "createdAt": "2026-10-14T00:59:46.289Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "audit_init",
+      "action": "SYSTEM_BOOTSTRAP",
+      "actorUserId": "system",
+      "actorRole": "system",
+      "details": "Initial system bootstrap completed with seed data and default administrator.",
+      "entityType": "system",
+      "entityId": "global",
+      "timestamp": "2026-10-14T00:59:46.289Z"
+    }
+  ],
+  "systemSettings": {
+    "websiteName": "JK Mission",
+    "websiteUrl": "https://jkmission.np.com",
+    "contactEmail": "jk5172794@gmail.com",
+    "contactPhone": "+9779766133831 / +9779815837905",
+    "address": "New Road, Kathmandu, Nepal",
+    "currency": "NPR",
+    "timezone": "Asia/Kathmandu",
+    "settlementPeriodDays": 15,
+    "minWithdrawalNpr": 100,
+    "maxWithdrawalNpr": 50000,
+    "defaultLevel1Percent": 15,
+    "defaultLevel2Percent": 10,
+    "defaultLevel3Percent": 5,
+    "unallocatedPolicy": "company_pool"
+  }
+}

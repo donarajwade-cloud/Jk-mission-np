@@ -32,14 +32,14 @@ export const CustomerReferrals: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shareText = `Join JK Mission Nepal with my Referral ID ${user?.referralId} to shop authentic products and receive real cashback: https://www.jkmissionnp.com`;
+  const shareText = `Join JK Mission with my Referral ID ${user?.referralId} to shop authentic products and receive real cashback: https://jkmission.np.com`;
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: 'JK Mission Nepal Referral',
+        title: 'JK Mission Referral',
         text: shareText,
-        url: 'https://www.jkmissionnp.com'
+        url: 'https://jkmission.np.com'
       }).catch(() => {});
     } else {
       handleCopy();
@@ -91,7 +91,7 @@ export const CustomerReferrals: React.FC = () => {
             {user ? formatNepalMobile(user.referralId) : ''}
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            Direct sponsor link: <span className="text-slate-300 font-mono">https://www.jkmissionnp.com/register?ref={user?.referralId}</span>
+            Direct sponsor link: <span className="text-slate-300 font-mono">https://jkmission.np.com/register?ref={user?.referralId}</span>
           </p>
         </div>
         <div className="text-left md:text-right text-xs text-slate-400 space-y-1">
