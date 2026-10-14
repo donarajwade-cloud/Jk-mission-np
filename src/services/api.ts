@@ -12,6 +12,8 @@ import {
   ProductCommissionSettings
 } from '../types/index.ts';
 
+import { handleLocalFallbackRequest } from './localStore.ts';
+
 const TOKEN_KEY = 'jkmission_auth_token';
 
 export const tokenStorage = {
@@ -31,24 +33,42 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(endpoint, {
-    ...options,
-    headers
-  });
+  let response: Response | null = null;
+  let fetchFailed = false;
+
+  try {
+    response = await fetch(endpoint, {
+      ...options,
+      headers
+    });
+  } catch (netErr) {
+    console.warn(`[API Network Failed on ${endpoint}] Falling back to client-side data store:`, netErr);
+    fetchFailed = true;
+  }
+
+  // If backend is not available, or static hosting returned 404 / HTML non-JSON
+  if (fetchFailed || !response) {
+    return handleLocalFallbackRequest<T>(endpoint, options);
+  }
 
   const contentType = response.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
-    const text = await response.text();
-    console.error(`[API Non-JSON Response] ${response.status} from ${endpoint}:`, text.slice(0, 200));
-    throw new Error(`Server returned status ${response.status} (${response.statusText || 'Non-JSON response'})`);
+  if (!contentType.includes('application/json') || response.status === 404) {
+    console.warn(`[API Non-JSON or 404 on ${endpoint}] Using client-side data fallback (Hostinger static mode)`);
+    try {
+      return handleLocalFallbackRequest<T>(endpoint, options);
+    } catch (fallbackErr: any) {
+      const text = await response.text();
+      console.error(`[API Non-JSON Response] ${response.status} from ${endpoint}:`, text.slice(0, 200));
+      throw new Error(fallbackErr?.message || `Server returned status ${response.status} (${response.statusText || 'Non-JSON response'})`);
+    }
   }
 
   let data: any;
   try {
     data = await response.json();
   } catch (err: any) {
-    console.error(`[API Parse Error] from ${endpoint}:`, err);
-    throw new Error(`Failed to parse JSON response: ${err?.message || 'Invalid JSON'}`);
+    console.warn(`[API Parse Error] on ${endpoint}, falling back to local store:`, err);
+    return handleLocalFallbackRequest<T>(endpoint, options);
   }
 
   if (!response.ok || data.success === false) {
