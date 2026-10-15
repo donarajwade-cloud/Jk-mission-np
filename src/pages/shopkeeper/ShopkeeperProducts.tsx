@@ -3,7 +3,8 @@ import { useAuth } from '../../context/AuthContext.tsx';
 import { Product } from '../../types/index.ts';
 import { api } from '../../services/api.ts';
 import { formatNPR, formatNepaliDate } from '../../utils/format.ts';
-import { ShoppingBag, Plus, Clock, CheckCircle, XCircle, AlertCircle, ShieldAlert } from 'lucide-react';
+import { ShoppingBag, Plus, Clock, CheckCircle, XCircle, AlertCircle, ShieldAlert, Pencil, Save, X } from 'lucide-react';
+import { ImageUploadGallery } from '../../components/common/ImageUploadGallery.tsx';
 
 export const ShopkeeperProducts: React.FC = () => {
   const { user } = useAuth();
@@ -23,6 +24,83 @@ export const ShopkeeperProducts: React.FC = () => {
   const [stockQuantity, setStockQuantity] = useState('20');
   const [sku, setSku] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+
+  // Edit Product Modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editCostPriceNpr, setEditCostPriceNpr] = useState('');
+  const [editProposedSellingPriceNpr, setEditProposedSellingPriceNpr] = useState('');
+  const [editStockQuantity, setEditStockQuantity] = useState('20');
+  const [editSku, setEditSku] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editGalleryImages, setEditGalleryImages] = useState<string[]>([]);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEditModal = (p: Product) => {
+    setEditingProduct(p);
+    setEditName(p.name);
+    setEditDescription(p.description || '');
+    setEditCategory(p.category);
+    setEditCostPriceNpr(String(p.costPriceNpr));
+    setEditProposedSellingPriceNpr(String(p.proposedSellingPriceNpr || p.finalSellingPriceNpr));
+    setEditStockQuantity(String(p.stockQuantity));
+    setEditSku(p.sku || '');
+    setEditImageUrl(p.imageUrl || '');
+    setEditGalleryImages(p.galleryImages || []);
+    setEditError(null);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    const cost = Number(editCostPriceNpr);
+    const proposed = Number(editProposedSellingPriceNpr);
+    const stock = Number(editStockQuantity);
+
+    if (isNaN(cost) || cost <= 0 || isNaN(proposed) || proposed <= 0) {
+      setEditError('Cost and proposed selling price must be positive numbers');
+      return;
+    }
+    if (proposed < cost) {
+      setEditError('Proposed selling price cannot be lower than cost price');
+      return;
+    }
+
+    setEditSubmitting(true);
+    setEditError(null);
+    try {
+      const res = await api.updateProduct(editingProduct.id, {
+        name: editName.trim(),
+        description: editDescription.trim(),
+        category: editCategory.trim(),
+        costPriceNpr: cost,
+        proposedSellingPriceNpr: proposed,
+        finalSellingPriceNpr: editingProduct.status === 'approved' ? (editingProduct.finalSellingPriceNpr || proposed) : proposed,
+        stockQuantity: Math.max(0, stock),
+        sku: editSku.trim(),
+        imageUrl: editImageUrl.trim(),
+        galleryImages: editGalleryImages
+      });
+
+      if (res.success && res.product) {
+        setSuccess(`Product "${res.product.name}" and photos updated successfully!`);
+        setEditModalOpen(false);
+        await loadProducts();
+        setTimeout(() => setSuccess(null), 4000);
+      }
+    } catch (err: any) {
+      setEditError(err.message || 'Update failed');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
 
   const loadProducts = async () => {
     if (!user) {
@@ -73,7 +151,8 @@ export const ShopkeeperProducts: React.FC = () => {
         proposedSellingPriceNpr: proposed,
         stockQuantity: stock,
         sku: sku.trim() || undefined,
-        imageUrl: imageUrl.trim() || undefined
+        imageUrl: imageUrl.trim() || undefined,
+        galleryImages: galleryImages.length > 0 ? galleryImages : undefined
       });
 
       if (res.success) {
@@ -87,6 +166,7 @@ export const ShopkeeperProducts: React.FC = () => {
         setStockQuantity('20');
         setSku('');
         setImageUrl('');
+        setGalleryImages([]);
         await loadProducts();
       }
     } catch (err: any) {
@@ -149,6 +229,7 @@ export const ShopkeeperProducts: React.FC = () => {
                   <th className="py-3 px-4 text-center">Stock</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Admin Commission Details</th>
+                  <th className="py-3 px-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -197,6 +278,17 @@ export const ShopkeeperProducts: React.FC = () => {
                       ) : (
                         <span className="text-slate-400 italic">Controlled by Admin upon approval</span>
                       )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(p)}
+                        className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold text-xs inline-flex items-center space-x-1 transition-colors"
+                        title="Edit Product & Photos"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Edit & Photos</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -319,14 +411,14 @@ export const ShopkeeperProducts: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Product Image URL</label>
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-400"
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <ImageUploadGallery
+                  primaryImage={imageUrl}
+                  onChangePrimaryImage={setImageUrl}
+                  galleryImages={galleryImages}
+                  onChangeGalleryImages={setGalleryImages}
+                  label="Product Photos (Upload from Gallery or URL)"
+                  helpText="Select product photos from your device / phone gallery."
                 />
               </div>
 
@@ -356,6 +448,152 @@ export const ShopkeeperProducts: React.FC = () => {
                   className="px-5 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold shadow-xs disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Submit for Admin Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product & Photo Upload Modal for Shopkeeper */}
+      {editModalOpen && editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
+            <div className="p-6 border-b border-slate-100 bg-blue-50/50 flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base">Edit Product &amp; Photos</h3>
+                <p className="text-xs text-slate-500">Update specifications, stock, and product gallery</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {editError && (
+              <div className="mx-6 mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4 text-xs">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <ImageUploadGallery
+                  primaryImage={editImageUrl}
+                  onChangePrimaryImage={setEditImageUrl}
+                  galleryImages={editGalleryImages}
+                  onChangeGalleryImages={setEditGalleryImages}
+                  label="Product Photos & Gallery"
+                  helpText="Upload new photos from your phone or device gallery."
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Product Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Organic Jumla Marsi Rice"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Category</label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="Organic & Food">Organic &amp; Food</option>
+                    <option value="Handicrafts & Decor">Handicrafts &amp; Decor</option>
+                    <option value="Fashion & Apparel">Fashion &amp; Apparel</option>
+                    <option value="Herbal & Wellness">Herbal &amp; Wellness</option>
+                    <option value="General Retail">General Retail</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">SKU Code</label>
+                  <input
+                    type="text"
+                    value={editSku}
+                    onChange={(e) => setEditSku(e.target.value)}
+                    placeholder="SKU-XXXXXX"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Cost Price (NPR)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editCostPriceNpr}
+                    onChange={(e) => setEditCostPriceNpr(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Proposed Selling Price</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editProposedSellingPriceNpr}
+                    onChange={(e) => setEditProposedSellingPriceNpr(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Stock Units</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={editStockQuantity}
+                    onChange={(e) => setEditStockQuantity(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Product Description</label>
+                <textarea
+                  rows={3}
+                  required
+                  value={editDescription}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe origin, quality, and usage..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="px-5 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold shadow-xs disabled:opacity-50 flex items-center space-x-1.5"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{editSubmitting ? 'Saving...' : 'Save Product & Photos'}</span>
                 </button>
               </div>
             </form>

@@ -15,8 +15,14 @@ import {
   Eye,
   Check,
   Ban,
-  Award
+  Award,
+  Pencil,
+  Upload,
+  X,
+  Save,
+  Image as ImageIcon
 } from 'lucide-react';
+import { ImageUploadGallery } from '../../components/common/ImageUploadGallery.tsx';
 
 export const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -204,6 +210,86 @@ export const AdminProducts: React.FC = () => {
       }
     } catch (err: any) {
       alert(err.message || 'Toggle failed');
+    }
+  };
+
+  // Product Edit & Photo Upload Modal States
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCostPriceNpr, setEditCostPriceNpr] = useState<number>(0);
+  const [editSellingPriceNpr, setEditSellingPriceNpr] = useState<number>(0);
+  const [editStockQuantity, setEditStockQuantity] = useState<number>(0);
+  const [editSku, setEditSku] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editGalleryImages, setEditGalleryImages] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEditModal = (prod: Product) => {
+    setEditingProduct(prod);
+    setEditName(prod.name);
+    setEditCategory(prod.category);
+    setEditDescription(prod.description || '');
+    setEditCostPriceNpr(prod.costPriceNpr);
+    setEditSellingPriceNpr(prod.finalSellingPriceNpr || prod.proposedSellingPriceNpr);
+    setEditStockQuantity(prod.stockQuantity);
+    setEditSku(prod.sku || '');
+    setEditImageUrl(prod.imageUrl || '');
+    setEditGalleryImages(prod.galleryImages || []);
+    setEditError(null);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveProductEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    if (!editName.trim()) {
+      setEditError('Product name is required');
+      return;
+    }
+    if (editCostPriceNpr <= 0 || editSellingPriceNpr <= 0) {
+      setEditError('Cost price and selling price must be greater than 0');
+      return;
+    }
+    if (editSellingPriceNpr < editCostPriceNpr) {
+      setEditError('Selling price cannot be less than cost price');
+      return;
+    }
+    if (!editImageUrl.trim()) {
+      setEditError('Please upload or provide at least one product photo');
+      return;
+    }
+
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const res = await api.updateProduct(editingProduct.id, {
+        name: editName.trim(),
+        category: editCategory.trim(),
+        description: editDescription.trim(),
+        costPriceNpr: Number(editCostPriceNpr),
+        proposedSellingPriceNpr: Number(editSellingPriceNpr),
+        finalSellingPriceNpr: Number(editSellingPriceNpr),
+        stockQuantity: Math.max(0, Number(editStockQuantity)),
+        sku: editSku.trim(),
+        imageUrl: editImageUrl.trim(),
+        galleryImages: editGalleryImages
+      });
+
+      if (res.success && res.product) {
+        setProducts(prev => prev.map(p => p.id === editingProduct.id ? res.product : p));
+        setFeedbackMsg({ type: 'success', text: `Product "${res.product.name}" and photos updated successfully!` });
+        setEditModalOpen(false);
+        setTimeout(() => setFeedbackMsg(null), 4000);
+      }
+    } catch (err: any) {
+      setEditError(err.message || 'Failed to update product');
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -395,6 +481,15 @@ export const AdminProducts: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center space-x-1.5">
+                          <button
+                            onClick={() => openEditModal(p)}
+                            className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold text-xs flex items-center space-x-1 transition-colors"
+                            title="Edit Product Details & Photos"
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Edit & Photos</span>
+                          </button>
+
                           <button
                             onClick={() => openConfigurator(p)}
                             className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs flex items-center space-x-1 shadow-xs transition-colors"
@@ -727,6 +822,167 @@ export const AdminProducts: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product & Photo Upload Modal */}
+      {editModalOpen && editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 my-8 animate-in fade-in duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">
+                  Admin Product Editor
+                </span>
+                <h3 className="text-xl font-black text-slate-950">
+                  Edit Product &amp; Photos
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Shop: {editingProduct.shopName} • ID: {editingProduct.id}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center space-x-1.5">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveProductEdit} className="space-y-5 text-xs">
+              {/* Product Photos & Gallery Uploader */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <ImageUploadGallery
+                  primaryImage={editImageUrl}
+                  onChangePrimaryImage={setEditImageUrl}
+                  galleryImages={editGalleryImages}
+                  onChangeGalleryImages={setEditGalleryImages}
+                  label="Product Photos & Gallery"
+                  helpText="Upload product photos directly from your computer / phone gallery, or enter an image URL."
+                />
+              </div>
+
+              {/* Basic Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-slate-800 mb-1">Product Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Product Title"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Category</label>
+                  <input
+                    type="text"
+                    required
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    placeholder="e.g. Organic & Food, Handicrafts, Fashion"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">SKU Code</label>
+                  <input
+                    type="text"
+                    value={editSku}
+                    onChange={(e) => setEditSku(e.target.value)}
+                    placeholder="SKU-XXXXXX"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Merchant Cost Price (NPR)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editCostPriceNpr}
+                    onChange={(e) => setEditCostPriceNpr(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Final Selling Price (NPR)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editSellingPriceNpr}
+                    onChange={(e) => setEditSellingPriceNpr(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-amber-700 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Available Stock Units</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={editStockQuantity}
+                    onChange={(e) => setEditStockQuantity(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Gross Margin (NPR)</label>
+                  <div className="w-full px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-black text-emerald-700">
+                    {formatNPR(editSellingPriceNpr - editCostPriceNpr)}
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-slate-800 mb-1">Product Description</label>
+                  <textarea
+                    rows={3}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Detailed specifications, features, origin..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{editSaving ? 'Saving Changes...' : 'Save Product & Photos'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

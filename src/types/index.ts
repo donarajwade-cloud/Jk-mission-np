@@ -91,6 +91,7 @@ export interface Product {
   lowStockThreshold: number;
   sku: string;
   imageUrl: string;
+  galleryImages?: string[];
   specifications?: Record<string, string>;
   status: 'pending_approval' | 'approved' | 'rejected' | 'disabled';
   rejectionReason?: string;

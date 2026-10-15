@@ -144,6 +144,7 @@ export const api = {
     stockQuantity: number;
     sku?: string;
     imageUrl?: string;
+    galleryImages?: string[];
     specifications?: Record<string, string>;
   }) =>
     request<{ success: boolean; message: string; product: Product }>('/api/products/submit', {
@@ -185,6 +186,12 @@ export const api = {
   toggleProductStatus: (id: string) =>
     request<{ success: boolean; product: Product }>(`/api/products/${id}/toggle-status`, {
       method: 'PUT'
+    }),
+
+  updateProduct: (id: string, payload: Partial<Product>) =>
+    request<{ success: boolean; message: string; product: Product }>(`/api/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
     }),
 
   // Orders

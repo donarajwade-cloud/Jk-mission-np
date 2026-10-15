@@ -371,9 +371,77 @@ router.put('/:id/toggle-status', authenticateToken, requireRole('admin'), (req: 
       entityId: prod.id,
       timestamp: now
     });
+    return prod;
   });
 
-  res.json({ success: true, product: db.data.products.find(p => p.id === req.params.id) });
+  res.json({ success: true, message: 'Status updated' });
+});
+
+// Admin or Shopkeeper Owner: Edit Product & Photos
+router.put('/:id', authenticateToken, (req: Request, res: Response): void => {
+  const { id } = req.params;
+  const user = req.user!;
+  const {
+    name,
+    category,
+    description,
+    costPriceNpr,
+    proposedSellingPriceNpr,
+    finalSellingPriceNpr,
+    stockQuantity,
+    sku,
+    imageUrl,
+    galleryImages,
+    specifications
+  } = req.body;
+
+  const result = db.transaction((data) => {
+    const prod = data.products.find(p => p.id === id);
+    if (!prod) {
+      return { success: false, status: 404, error: 'Product not found' };
+    }
+
+    if (user.role !== 'admin' && prod.shopkeeperUserId !== user.userId) {
+      return { success: false, status: 403, error: 'Permission denied to edit this product' };
+    }
+
+    const now = new Date().toISOString();
+    if (name) prod.name = String(name).trim();
+    if (category) prod.category = String(category).trim();
+    if (description !== undefined) prod.description = String(description).trim();
+    if (costPriceNpr !== undefined && !isNaN(Number(costPriceNpr))) prod.costPriceNpr = Number(costPriceNpr);
+    if (proposedSellingPriceNpr !== undefined && !isNaN(Number(proposedSellingPriceNpr))) prod.proposedSellingPriceNpr = Number(proposedSellingPriceNpr);
+    if (finalSellingPriceNpr !== undefined && !isNaN(Number(finalSellingPriceNpr))) prod.finalSellingPriceNpr = Number(finalSellingPriceNpr);
+    if (stockQuantity !== undefined && !isNaN(Number(stockQuantity))) prod.stockQuantity = Math.max(0, parseInt(stockQuantity, 10));
+    if (sku) prod.sku = String(sku).trim();
+    if (imageUrl) prod.imageUrl = String(imageUrl).trim();
+    if (Array.isArray(galleryImages)) prod.galleryImages = galleryImages;
+    if (specifications && typeof specifications === 'object') prod.specifications = specifications;
+    prod.updatedAt = now;
+
+    data.auditLogs.push({
+      id: `audit_edit_${prod.id}_${Date.now()}`,
+      action: 'PRODUCT_UPDATED',
+      actorUserId: user.userId,
+      actorRole: user.role,
+      details: `Product "${prod.name}" edited by ${user.role} (${user.name})`,
+      entityType: 'product',
+      entityId: prod.id,
+      timestamp: now
+    });
+
+    return { success: true, product: prod };
+  });
+
+  if (!result.success) {
+    res.status((result as any).status || 400).json(result);
+  } else {
+    res.json({
+      success: true,
+      message: 'Product details and photos updated successfully',
+      product: result.product
+    });
+  }
 });
 
 export default router;

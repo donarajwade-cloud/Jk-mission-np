@@ -920,6 +920,42 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     } as unknown as T;
   }
 
+  if (path.match(/^\/api\/products\/[^/]+\/toggle-status$/) && method === 'PUT') {
+    const prodId = path.split('/')[3];
+    const product = db.products.find(p => p.id === prodId);
+    if (!product) throw new Error('Product not found');
+    product.status = product.status === 'approved' ? 'disabled' : 'approved';
+    product.updatedAt = new Date().toISOString();
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      product
+    } as unknown as T;
+  }
+
+  if (path.match(/^\/api\/products\/[^/]+$/) && method === 'PUT') {
+    const prodId = path.split('/')[3];
+    const product = db.products.find(p => p.id === prodId);
+    if (!product) throw new Error('Product not found');
+    if (body.name) product.name = String(body.name).trim();
+    if (body.category) product.category = String(body.category).trim();
+    if (body.description !== undefined) product.description = String(body.description).trim();
+    if (body.costPriceNpr !== undefined && !isNaN(Number(body.costPriceNpr))) product.costPriceNpr = Number(body.costPriceNpr);
+    if (body.proposedSellingPriceNpr !== undefined && !isNaN(Number(body.proposedSellingPriceNpr))) product.proposedSellingPriceNpr = Number(body.proposedSellingPriceNpr);
+    if (body.finalSellingPriceNpr !== undefined && !isNaN(Number(body.finalSellingPriceNpr))) product.finalSellingPriceNpr = Number(body.finalSellingPriceNpr);
+    if (body.stockQuantity !== undefined && !isNaN(Number(body.stockQuantity))) product.stockQuantity = Number(body.stockQuantity);
+    if (body.sku) product.sku = String(body.sku).trim();
+    if (body.imageUrl) product.imageUrl = String(body.imageUrl).trim();
+    if (Array.isArray(body.galleryImages)) product.galleryImages = body.galleryImages;
+    product.updatedAt = new Date().toISOString();
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      message: 'Product updated successfully',
+      product
+    } as unknown as T;
+  }
+
   // --- ORDERS ---
   if (path === '/api/orders' && method === 'POST') {
     const orderItems = body.items.map((it: any) => {
