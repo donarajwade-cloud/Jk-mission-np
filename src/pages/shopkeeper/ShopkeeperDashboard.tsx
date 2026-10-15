@@ -80,6 +80,21 @@ export const ShopkeeperDashboard: React.FC<ShopkeeperDashboardProps> = ({ onNavi
         </button>
       </div>
 
+      {/* Pending Account Review Banner */}
+      {(!shop?.isOpen || user?.status === 'pending') && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-start space-x-3 text-xs text-amber-950 shadow-xs animate-in fade-in">
+          <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
+          <div className="space-y-1">
+            <h4 className="font-black text-amber-900 text-xs">
+              Merchant Application Submitted &amp; Pending Admin Approval
+            </h4>
+            <p className="text-amber-800 leading-snug">
+              Your store registration details have been sent to the Master Administrator for verification. You can start submitting your products right away using &quot;Submit New Product&quot;. Once the admin approves your application and configures product commissions, your shop and products will automatically go live.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Merchant Commission Digital Card Summary */}

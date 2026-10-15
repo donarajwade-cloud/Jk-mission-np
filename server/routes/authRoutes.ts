@@ -227,16 +227,31 @@ router.post('/register-shopkeeper', (req: Request, res: Response): void => {
     data.shopkeepers.push(newProfile);
     data.shops.push(newShop);
     data.shopkeeperWallets[userId] = newWallet;
-    // Notify admin
-    data.notifications.push({
-      id: `notif_skreg_${Date.now()}`,
-      recipientUserId: 'user_admin_1',
-      title: 'New Shopkeeper Application',
-      message: `${fullName} has applied with shop "${shopName}" in ${district}. Requires verification.`,
-      type: 'system',
-      read: false,
-      createdAt: now
-    });
+    // Notify all admin users
+    const admins = data.users.filter(u => u.role === 'admin');
+    if (admins.length === 0) {
+      data.notifications.push({
+        id: `notif_skreg_${Date.now()}`,
+        recipientUserId: 'user_admin_1',
+        title: '🚨 New Shopkeeper Application Awaiting Approval',
+        message: `${fullName} has applied with shop "${shopName}" in ${district}. Requires verification.`,
+        type: 'system',
+        read: false,
+        createdAt: now
+      });
+    } else {
+      for (const admin of admins) {
+        data.notifications.push({
+          id: `notif_skreg_${Date.now()}_${admin.id}`,
+          recipientUserId: admin.id,
+          title: '🚨 New Shopkeeper Application Awaiting Approval',
+          message: `${fullName} has applied with shop "${shopName}" in ${district} (${normalizedMobile}). Requires admin approval.`,
+          type: 'system',
+          read: false,
+          createdAt: now
+        });
+      }
+    }
     data.auditLogs.push({
       id: `audit_reg_${userId}`,
       action: 'SHOPKEEPER_APPLIED',

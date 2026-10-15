@@ -758,15 +758,30 @@ router.post("/register-shopkeeper", (req, res) => {
     data.shopkeepers.push(newProfile);
     data.shops.push(newShop);
     data.shopkeeperWallets[userId] = newWallet;
-    data.notifications.push({
-      id: `notif_skreg_${Date.now()}`,
-      recipientUserId: "user_admin_1",
-      title: "New Shopkeeper Application",
-      message: `${fullName} has applied with shop "${shopName}" in ${district}. Requires verification.`,
-      type: "system",
-      read: false,
-      createdAt: now
-    });
+    const admins = data.users.filter((u) => u.role === "admin");
+    if (admins.length === 0) {
+      data.notifications.push({
+        id: `notif_skreg_${Date.now()}`,
+        recipientUserId: "user_admin_1",
+        title: "\u{1F6A8} New Shopkeeper Application Awaiting Approval",
+        message: `${fullName} has applied with shop "${shopName}" in ${district}. Requires verification.`,
+        type: "system",
+        read: false,
+        createdAt: now
+      });
+    } else {
+      for (const admin of admins) {
+        data.notifications.push({
+          id: `notif_skreg_${Date.now()}_${admin.id}`,
+          recipientUserId: admin.id,
+          title: "\u{1F6A8} New Shopkeeper Application Awaiting Approval",
+          message: `${fullName} has applied with shop "${shopName}" in ${district} (${normalizedMobile}). Requires admin approval.`,
+          type: "system",
+          read: false,
+          createdAt: now
+        });
+      }
+    }
     data.auditLogs.push({
       id: `audit_reg_${userId}`,
       action: "SHOPKEEPER_APPLIED",
@@ -1441,15 +1456,30 @@ router2.post("/submit", authenticateToken, requireRole("shopkeeper"), (req, res)
   };
   db.transaction((data) => {
     data.products.push(newProduct);
-    data.notifications.push({
-      id: `notif_${Date.now()}`,
-      recipientUserId: "user_admin_1",
-      title: "New Product Pending Approval",
-      message: `${shop.name} submitted a new product: "${name}" at NPR ${proposedSellingPriceNpr}`,
-      type: "product",
-      read: false,
-      createdAt: now
-    });
+    const admins = data.users.filter((u) => u.role === "admin");
+    if (admins.length === 0) {
+      data.notifications.push({
+        id: `notif_${Date.now()}`,
+        recipientUserId: "user_admin_1",
+        title: "\u{1F4E6} New Product Pending Approval",
+        message: `${shop.name} submitted a new product: "${name}" at proposed price NPR ${proposedSellingPriceNpr}. Configure commissions to approve.`,
+        type: "product",
+        read: false,
+        createdAt: now
+      });
+    } else {
+      for (const admin of admins) {
+        data.notifications.push({
+          id: `notif_${Date.now()}_${admin.id}`,
+          recipientUserId: admin.id,
+          title: "\u{1F4E6} New Product Pending Approval",
+          message: `${shop.name} submitted a new product: "${name}" at proposed price NPR ${proposedSellingPriceNpr}. Configure commissions to approve.`,
+          type: "product",
+          read: false,
+          createdAt: now
+        });
+      }
+    }
     data.auditLogs.push({
       id: `audit_prod_${productId}`,
       action: "PRODUCT_SUBMITTED",
@@ -2247,15 +2277,21 @@ router5.get("/overview", (req, res) => {
   const pendingWithdrawalAmount = pendingWithdrawals.reduce((sum, w) => sum + w.amountNpr, 0);
   const paidWithdrawals = data.withdrawals.filter((w) => w.status === "paid");
   const paidWithdrawalAmount = paidWithdrawals.reduce((sum, w) => sum + w.amountNpr, 0);
+  const pendingShopkeepers = data.shopkeepers.filter((s) => s.status === "pending").length;
+  const pendingProducts = data.products.filter((p) => p.status === "pending_approval").length;
+  const pendingApprovals = pendingShopkeepers + pendingProducts;
   res.json({
     success: true,
     stats: {
       totalCustomers,
       totalShopkeepers,
       approvedShopkeepers,
+      pendingShopkeepers,
       totalShops,
       totalProducts,
       approvedProducts,
+      pendingProducts,
+      pendingApprovals,
       totalSalesCount,
       totalSalesValue,
       totalCashbackAwarded,

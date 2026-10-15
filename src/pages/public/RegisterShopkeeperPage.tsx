@@ -69,7 +69,7 @@ export const RegisterShopkeeperPage: React.FC<RegisterShopkeeperPageProps> = ({
           </div>
           <h1 className="text-2xl font-black text-slate-950 pt-2">Shopkeeper Registration</h1>
           <p className="text-xs text-slate-500">
-            Join the JK Mission Nepal retail network to sell products and reach thousands of customers
+            Join the JK Mission Nepal retail traditional business to sell products and reach thousands of customers
           </p>
         </div>
 

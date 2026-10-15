@@ -163,11 +163,28 @@ export function executeOrderCommissions(orderId: string): { success: boolean; me
     // Process each item in the order
     for (const item of order.items) {
       const product = data.products.find((p) => p.id === item.productId);
-      if (!product || !product.commissionSettings) {
+      if (!product) {
         continue;
       }
 
-      const settings = product.commissionSettings;
+      let settings = product.commissionSettings;
+      if (!settings) {
+        const margin = Math.max(0, item.unitPriceNpr - item.unitCostNpr);
+        settings = {
+          customerCashbackType: 'fixed',
+          customerCashbackValue: Math.round(margin * 0.15),
+          referralPoolType: 'fixed',
+          referralPoolValue: Math.round(margin * 0.35),
+          level1Percentage: 50,
+          level2Percentage: 30,
+          level3Percentage: 20,
+          shopkeeperCommissionType: 'fixed',
+          shopkeeperCommissionValue: Math.round(margin * 0.20),
+          companyShareNpr: Math.round(margin * 0.20),
+          permittedExpensesNpr: Math.round(margin * 0.10)
+        };
+      }
+
       const preview = calculateProductDistribution(
         item.unitPriceNpr,
         item.unitCostNpr,

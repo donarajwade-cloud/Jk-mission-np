@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Order } from '../../types/index.ts';
 import { api } from '../../services/api.ts';
 import { formatNPR, formatNepaliDate } from '../../utils/format.ts';
-import { ShoppingBag, FileText, CheckCircle, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
+import { ShoppingBag, FileText, CheckCircle, Clock, AlertTriangle, ArrowRight, Ticket, Sparkles } from 'lucide-react';
 
 interface CustomerOrdersProps {
   onViewInvoice: (orderId: string) => void;
@@ -131,6 +131,25 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
                   </div>
                 ))}
               </div>
+
+              {/* Coupon details */}
+              {(o.couponCode || o.awardedCoupon) && (
+                <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  {o.couponCode && (
+                    <div className="flex items-center space-x-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                      <Ticket className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Coupon Applied: <strong className="font-mono">{o.couponCode}</strong> (-{formatNPR(o.couponDiscountNpr)})</span>
+                    </div>
+                  )}
+
+                  {o.awardedCoupon && (
+                    <div className="flex items-center space-x-1.5 text-amber-900 bg-amber-100/70 border border-amber-300 px-2.5 py-1 rounded-lg">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Next Order Coupon: <strong className="font-mono text-slate-900">{o.awardedCoupon.code}</strong> ({o.awardedCoupon.discountPercentage}% OFF)</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                 <div>

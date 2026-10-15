@@ -10,7 +10,9 @@ import {
   SystemSettings,
   Shop,
   CustomerProfile,
-  ShopkeeperProfile
+  ShopkeeperProfile,
+  CashbackCouponRule,
+  CashbackCoupon
 } from '../types/index.ts';
 
 const LOCAL_STORAGE_DB_KEY = 'jkmission_local_database_v2';
@@ -23,6 +25,8 @@ interface LocalDatabaseState {
   shops: Shop[];
   products: Product[];
   orders: Order[];
+  cashbackCouponRule: CashbackCouponRule;
+  coupons: CashbackCoupon[];
   cashbackLedger: any[];
   referralLedger: any[];
   shopkeeperLedger: any[];
@@ -83,6 +87,16 @@ const DEFAULT_SEED_DATA: LocalDatabaseState = {
       sponsorReferralId: '+9779833333333',
       status: 'active',
       createdAt: new Date().toISOString()
+    },
+    {
+      id: 'user_cust_4',
+      name: 'Deepak Khatri',
+      mobile: '+9779855555555',
+      role: 'customer',
+      referralId: '+9779855555555',
+      sponsorReferralId: '+9779844444444',
+      status: 'active',
+      createdAt: new Date().toISOString()
     }
   ],
   passwords: {
@@ -90,7 +104,8 @@ const DEFAULT_SEED_DATA: LocalDatabaseState = {
     user_shop_1: 'Shopkeeper@123',
     user_cust_1: 'Customer@123',
     user_cust_2: 'Customer@123',
-    user_cust_3: 'Customer@123'
+    user_cust_3: 'Customer@123',
+    user_cust_4: 'Customer@123'
   },
   customerProfiles: [
     {
@@ -123,6 +138,17 @@ const DEFAULT_SEED_DATA: LocalDatabaseState = {
       sponsorReferralId: '+9779833333333',
       city: 'Lalitpur',
       district: 'Lalitpur',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'cust_prof_4',
+      userId: 'user_cust_4',
+      fullName: 'Deepak Khatri',
+      mobile: '+9779855555555',
+      referralId: '+9779855555555',
+      sponsorReferralId: '+9779844444444',
+      city: 'Bhaktapur',
+      district: 'Bhaktapur',
       createdAt: new Date().toISOString()
     }
   ],
@@ -291,6 +317,22 @@ const DEFAULT_SEED_DATA: LocalDatabaseState = {
     }
   ],
   orders: [],
+  cashbackCouponRule: {
+    id: 'rule_cb_default',
+    enabled: true,
+    title: '3-Level Purchase Cashback Coupon Engine',
+    level1Percentage: 10,
+    level2Percentage: 15,
+    level3Percentage: 20,
+    level1MinSpendNpr: 0,
+    level2MinSpendNpr: 1000,
+    level3MinSpendNpr: 2500,
+    validityDays: 30,
+    minOrderToApplyNpr: 200,
+    maxDiscountNpr: 1000,
+    updatedAt: new Date().toISOString()
+  },
+  coupons: [],
   cashbackLedger: [],
   referralLedger: [],
   shopkeeperLedger: [],
@@ -422,6 +464,100 @@ function getLocalDatabase(): LocalDatabaseState {
       parsed.passwords = parsed.passwords || {};
       parsed.passwords['user_admin_1'] = 'Admin123@';
     }
+
+    // Ensure shopkeeperProfiles array exists and sync all shopkeeper users
+    parsed.shopkeeperProfiles = parsed.shopkeeperProfiles || [];
+    parsed.shops = parsed.shops || [];
+    parsed.notifications = parsed.notifications || [];
+
+    parsed.users?.filter((u: User) => u.role === 'shopkeeper').forEach((skUser: User) => {
+      let prof = parsed.shopkeeperProfiles.find((p: ShopkeeperProfile) => p.userId === skUser.id || p.id === `sk_prof_${skUser.id}`);
+      const skShop = parsed.shops.find((sh: Shop) => sh.shopkeeperUserId === skUser.id);
+      if (!prof) {
+        prof = {
+          id: `sk_prof_${skUser.id}`,
+          userId: skUser.id,
+          fullName: skUser.name,
+          mobile: skUser.mobile,
+          shopName: skShop?.name || `${skUser.name}'s Shop`,
+          shopAddress: skShop?.address || 'Kathmandu, Nepal',
+          district: skShop?.district || 'Kathmandu',
+          municipality: skShop?.municipality || 'Kathmandu',
+          status: skUser.status === 'active' ? 'approved' : (skUser.status || 'pending'),
+          createdAt: skUser.createdAt || new Date().toISOString()
+        };
+      }
+    });
+
+    // Ensure 3-level customer chain exists
+    if (!parsed.users?.some((u: User) => u.id === 'user_cust_4')) {
+      parsed.users?.push({
+        id: 'user_cust_4',
+        name: 'Deepak Khatri',
+        mobile: '+9779855555555',
+        role: 'customer',
+        referralId: '+9779855555555',
+        sponsorReferralId: '+9779844444444',
+        status: 'active',
+        createdAt: new Date().toISOString()
+      });
+      parsed.passwords = parsed.passwords || {};
+      parsed.passwords['user_cust_4'] = 'Customer@123';
+      parsed.customerProfiles = parsed.customerProfiles || [];
+      parsed.customerProfiles.push({
+        id: 'cust_prof_4',
+        userId: 'user_cust_4',
+        fullName: 'Deepak Khatri',
+        mobile: '+9779855555555',
+        referralId: '+9779855555555',
+        sponsorReferralId: '+9779844444444',
+        city: 'Bhaktapur',
+        district: 'Bhaktapur',
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    // Ensure customerWallets and ledgers exist for all customers
+    parsed.customerWallets = parsed.customerWallets || {};
+    parsed.cashbackLedger = parsed.cashbackLedger || [];
+    parsed.referralLedger = parsed.referralLedger || [];
+    parsed.shopkeeperLedger = parsed.shopkeeperLedger || [];
+    parsed.orders = parsed.orders || [];
+    parsed.coupons = parsed.coupons || [];
+    if (!parsed.cashbackCouponRule) {
+      parsed.cashbackCouponRule = {
+        id: 'rule_cb_default',
+        enabled: true,
+        title: '3-Level Purchase Cashback Coupon Engine',
+        level1Percentage: 10,
+        level2Percentage: 15,
+        level3Percentage: 20,
+        level1MinSpendNpr: 0,
+        level2MinSpendNpr: 1000,
+        level3MinSpendNpr: 2500,
+        validityDays: 30,
+        minOrderToApplyNpr: 200,
+        maxDiscountNpr: 1000,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    parsed.users?.filter((u: User) => u.role === 'customer').forEach((cust: User) => {
+      if (!parsed.customerWallets[cust.id]) {
+        parsed.customerWallets[cust.id] = {
+          userId: cust.id,
+          cashbackAvailableNpr: 0,
+          cashbackPendingNpr: 0,
+          cashbackTotalEarnedNpr: 0,
+          incomeAvailableNpr: 0,
+          incomePendingNpr: 0,
+          incomeTotalEarnedNpr: 0,
+          incomeTotalWithdrawnNpr: 0,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    });
+
     return parsed;
   } catch {
     return DEFAULT_SEED_DATA;
@@ -559,44 +695,92 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
 
   if (path === '/api/auth/register-shopkeeper' && method === 'POST') {
     const newUserId = `user_shop_${Date.now()}`;
+    const now = new Date().toISOString();
     const newUser: User = {
       id: newUserId,
       name: body.fullName,
       mobile: body.mobile.startsWith('+') ? body.mobile : `+977${body.mobile}`,
       role: 'shopkeeper',
       referralId: body.mobile.startsWith('+') ? body.mobile : `+977${body.mobile}`,
-      status: 'active',
-      createdAt: new Date().toISOString()
+      status: 'pending', // Requires admin verification and approval
+      createdAt: now
     };
     db.users.push(newUser);
+
     const newShopId = `shop_${Date.now()}`;
-    db.shops.push({
+    const newProfileId = `sk_prof_${newUserId}`;
+
+    const newProfile: ShopkeeperProfile = {
+      id: newProfileId,
+      userId: newUserId,
+      fullName: body.fullName,
+      mobile: newUser.mobile,
+      shopName: body.shopName,
+      shopAddress: body.shopAddress,
+      district: body.district,
+      municipality: body.municipality,
+      panOrVatNumber: body.panOrVatNumber || undefined,
+      status: 'pending',
+      createdAt: now
+    };
+    db.shopkeeperProfiles = db.shopkeeperProfiles || [];
+    db.shopkeeperProfiles.unshift(newProfile);
+
+    const newShop: Shop = {
       id: newShopId,
-      shopkeeperId: `sk_prof_${Date.now()}`,
+      shopkeeperId: newProfileId,
       shopkeeperUserId: newUserId,
       name: body.shopName,
       address: body.shopAddress,
       district: body.district,
       municipality: body.municipality,
-      phone: body.mobile,
-      description: 'Local verified merchant store on JK Mission Nepal.',
+      phone: newUser.mobile,
+      description: `Merchant store at ${body.shopAddress}, ${body.municipality}, ${body.district}.`,
       rating: 5.0,
       featured: false,
-      isOpen: true
-    });
+      isOpen: false, // Closed until approved
+      imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
+    };
+    db.shops.push(newShop);
+
     db.shopkeeperWallets[newUserId] = {
       userId: newUserId,
       availableCommissionNpr: 0,
       pendingCommissionNpr: 0,
       totalEarnedNpr: 0,
       totalWithdrawnNpr: 0,
-      updatedAt: new Date().toISOString()
+      updatedAt: now
     };
+
+    // Alert Admin users about this new registration
+    db.notifications.unshift({
+      id: `notif_sk_${Date.now()}`,
+      recipientUserId: 'user_admin_1',
+      title: '🚨 New Shopkeeper Application Awaiting Approval',
+      message: `${body.fullName} registered a new store: "${body.shopName}" (${body.district}, ${body.municipality}). Mobile: ${newUser.mobile}. Please review and approve.`,
+      type: 'system',
+      read: false,
+      createdAt: now
+    });
+
+    db.auditLogs.unshift({
+      id: `audit_sk_${newUserId}`,
+      action: 'SHOPKEEPER_APPLIED',
+      actorUserId: newUserId,
+      actorRole: 'shopkeeper',
+      details: `New shopkeeper applied: ${body.shopName} by ${body.fullName} (${newUser.mobile})`,
+      entityType: 'shopkeeper',
+      entityId: newProfileId,
+      timestamp: now
+    });
+
     saveLocalDatabase(db);
     return {
       success: true,
       token: `local_user_${newUserId}`,
-      user: newUser
+      user: newUser,
+      shopkeeper: newProfile,
+      shop: newShop
     } as unknown as T;
   }
 
@@ -642,30 +826,55 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
   }
 
   if (path === '/api/products/submit' && method === 'POST') {
+    const now = new Date().toISOString();
+    const userShop = db.shops.find(s => s.shopkeeperUserId === currentUser?.id) || db.shops[0];
     const newProduct: Product = {
       id: `prod_${Date.now()}`,
-      shopId: 'shop_1',
-      shopName: 'My Store',
+      shopId: userShop ? userShop.id : 'shop_1',
+      shopName: userShop ? userShop.name : (currentUser?.name ? `${currentUser.name}'s Shop` : 'Merchant Store'),
       shopkeeperUserId: currentUser?.id || 'user_shop_1',
       name: body.name,
-      description: body.description,
-      category: body.category,
+      description: body.description || '',
+      category: body.category || 'General',
       costPriceNpr: Number(body.costPriceNpr),
       proposedSellingPriceNpr: Number(body.proposedSellingPriceNpr),
       finalSellingPriceNpr: Number(body.proposedSellingPriceNpr),
-      stockQuantity: Number(body.stockQuantity),
+      stockQuantity: Number(body.stockQuantity) || 0,
       lowStockThreshold: 5,
-      sku: body.sku || `SKU-${Date.now()}`,
+      sku: body.sku || `SKU-${Date.now().toString().slice(-6)}`,
       imageUrl: body.imageUrl || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
       status: 'pending_approval',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: now,
+      updatedAt: now
     };
     db.products.unshift(newProduct);
+
+    // Send immediate notification to Admin
+    db.notifications.unshift({
+      id: `notif_prodsub_${Date.now()}`,
+      recipientUserId: 'user_admin_1',
+      title: '📦 New Product Submission Awaiting Approval',
+      message: `${newProduct.shopName} submitted a new product "${newProduct.name}" at proposed price NPR ${newProduct.proposedSellingPriceNpr}. Please configure commissions and approve.`,
+      type: 'product',
+      read: false,
+      createdAt: now
+    });
+
+    db.auditLogs.unshift({
+      id: `audit_prod_${newProduct.id}`,
+      action: 'PRODUCT_SUBMITTED',
+      actorUserId: currentUser?.id || 'user_shop_1',
+      actorRole: 'shopkeeper',
+      details: `Product "${newProduct.name}" submitted by ${newProduct.shopName}`,
+      entityType: 'product',
+      entityId: newProduct.id,
+      timestamp: now
+    });
+
     saveLocalDatabase(db);
     return {
       success: true,
-      message: 'Product submitted successfully',
+      message: 'Product submitted successfully and sent to admin for approval.',
       product: newProduct
     } as unknown as T;
   }
@@ -728,21 +937,104 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
       };
     });
     const totalAmount = orderItems.reduce((sum: number, it: any) => sum + it.totalNpr, 0);
+    const orderId = `ord_${Date.now()}`;
+    const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+    const now = new Date().toISOString();
+
+    // Check coupon redemption
+    let appliedCouponDiscountNpr = 0;
+    let appliedCouponCode: string | undefined = undefined;
+    if (body.couponCode && typeof body.couponCode === 'string') {
+      const cleanCode = body.couponCode.trim().toUpperCase();
+      const cpn = (db.coupons || []).find(
+        c => c.code.toUpperCase() === cleanCode && (c.userId === (currentUser?.id || 'user_cust_1') || c.userId === 'all')
+      );
+      if (cpn && cpn.status === 'available' && cpn.expiresAt > now && totalAmount >= cpn.minOrderAmountNpr) {
+        let disc = Math.round((totalAmount * cpn.discountPercentage) / 100);
+        if (cpn.maxDiscountNpr && disc > cpn.maxDiscountNpr) disc = cpn.maxDiscountNpr;
+        disc = Math.min(disc, totalAmount);
+        appliedCouponDiscountNpr = disc;
+        appliedCouponCode = cpn.code;
+        cpn.status = 'used';
+        cpn.usedInOrderId = orderId;
+        cpn.usedInOrderNumber = orderNumber;
+        cpn.usedAt = now;
+        cpn.discountAppliedNpr = disc;
+      }
+    }
+
+    const finalPayableNpr = Math.max(0, totalAmount - appliedCouponDiscountNpr);
+
+    // Automatic 3-Level Cashback Coupon award
+    let awardedCouponInfo: { code: string; discountPercentage: number; level: 1 | 2 | 3 } | undefined = undefined;
+    const rule = db.cashbackCouponRule;
+    if (rule && rule.enabled !== false) {
+      let level: 1 | 2 | 3 = 1;
+      let discountPercentage = rule.level1Percentage || 10;
+      if (totalAmount >= (rule.level3MinSpendNpr || 2500)) {
+        level = 3;
+        discountPercentage = rule.level3Percentage || 20;
+      } else if (totalAmount >= (rule.level2MinSpendNpr || 1000)) {
+        level = 2;
+        discountPercentage = rule.level2Percentage || 15;
+      } else {
+        level = 1;
+        discountPercentage = rule.level1Percentage || 10;
+      }
+      const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+      const newCode = `JKMCB-L${level}-${randomSuffix}`;
+      const validityDays = rule.validityDays || 30;
+      const expiresAt = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString();
+      const newCoupon = {
+        id: `cpn_${Date.now()}_${randomSuffix}`,
+        code: newCode,
+        userId: currentUser?.id || 'user_cust_1',
+        userName: currentUser?.name || body.shippingAddress?.fullName || 'Customer',
+        userMobile: currentUser?.mobile || body.shippingAddress?.mobile || '+9779800000000',
+        sourceOrderId: orderId,
+        sourceOrderNumber: orderNumber,
+        level,
+        discountPercentage,
+        minOrderAmountNpr: rule.minOrderToApplyNpr || 200,
+        maxDiscountNpr: rule.maxDiscountNpr || 1000,
+        status: 'available' as const,
+        expiresAt,
+        createdAt: now
+      };
+      db.coupons = db.coupons || [];
+      db.coupons.unshift(newCoupon);
+      awardedCouponInfo = { code: newCode, discountPercentage, level };
+
+      db.notifications = db.notifications || [];
+      db.notifications.unshift({
+        id: `notif_cpn_${Date.now()}`,
+        recipientUserId: currentUser?.id || 'user_cust_1',
+        title: '🎟️ Next Purchase Cashback Coupon Awarded!',
+        message: `Your order #${orderNumber} unlocked a Level ${level} Cashback Coupon (${discountPercentage}% OFF)! Use coupon code "${newCode}" on your next purchase (valid ${validityDays} days).`,
+        type: 'cashback',
+        read: false,
+        createdAt: now
+      });
+    }
+
     const newOrder: Order = {
-      id: `ord_${Date.now()}`,
-      orderNumber: `ORD-${Date.now().toString().slice(-6)}`,
+      id: orderId,
+      orderNumber,
       customerId: currentUser?.id || 'user_cust_1',
       customerName: currentUser?.name || body.shippingAddress?.fullName || 'Customer',
       customerMobile: currentUser?.mobile || body.shippingAddress?.mobile || '+9779800000000',
       items: orderItems,
-      totalAmountNpr: totalAmount,
+      totalAmountNpr: finalPayableNpr,
+      couponCode: appliedCouponCode,
+      couponDiscountNpr: appliedCouponDiscountNpr,
+      awardedCoupon: awardedCouponInfo,
       paymentMethod: body.paymentMethod || 'cash_on_delivery',
       paymentReference: body.paymentReference,
       paymentStatus: body.paymentMethod === 'cash_on_delivery' ? 'pending' : 'verified',
       orderStatus: 'placed',
       shippingAddress: body.shippingAddress,
       commissionProcessed: false,
-      createdAt: new Date().toISOString()
+      createdAt: now
     };
     db.orders.unshift(newOrder);
     saveLocalDatabase(db);
@@ -773,10 +1065,333 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     } as unknown as T;
   }
 
+  if (path.match(/^\/api\/orders\/[^/]+$/) && method === 'GET') {
+    const orderId = path.split('/')[3];
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) throw new Error('Order not found');
+    return {
+      success: true,
+      order
+    } as unknown as T;
+  }
+
+  if (path.match(/^\/api\/orders\/[^/]+\/verify-payment$/) && method === 'PUT') {
+    const orderId = path.split('/')[3];
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) throw new Error('Order not found');
+    order.paymentStatus = 'verified';
+    if (order.orderStatus === 'placed') order.orderStatus = 'processing';
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      order
+    } as unknown as T;
+  }
+
+  if (path.match(/^\/api\/orders\/[^/]+\/complete-and-release-commission$/) && method === 'PUT') {
+    const orderId = path.split('/')[3];
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) throw new Error('Order not found');
+
+    const now = new Date().toISOString();
+    order.paymentStatus = 'verified';
+
+    if (!order.commissionProcessed) {
+      const buyer = db.users.find(u => u.id === order.customerId);
+      const cleanDigits = (m?: string) => (m || '').replace(/\D/g, '').slice(-10);
+
+      // Find upline chain sponsors
+      const findSponsor = (refId?: string, excludeIds: string[] = []) => {
+        if (!refId) return undefined;
+        const targetClean = cleanDigits(refId);
+        return db.users.find(u =>
+          !excludeIds.includes(u.id) &&
+          u.status !== 'suspended' &&
+          (
+            u.id === refId ||
+            u.referralId === refId ||
+            u.mobile === refId ||
+            (targetClean && targetClean.length >= 8 && (cleanDigits(u.mobile) === targetClean || cleanDigits(u.referralId) === targetClean))
+          )
+        );
+      };
+
+      const l1Sponsor = buyer ? findSponsor(buyer.sponsorReferralId, [buyer.id]) : undefined;
+      const l2Sponsor = l1Sponsor ? findSponsor(l1Sponsor.sponsorReferralId, [buyer?.id || '', l1Sponsor.id]) : undefined;
+      const l3Sponsor = l2Sponsor ? findSponsor(l2Sponsor.sponsorReferralId, [buyer?.id || '', l1Sponsor?.id || '', l2Sponsor.id]) : undefined;
+
+      // Process each item in order
+      for (const item of order.items) {
+        const prod = db.products.find(p => p.id === item.productId);
+        const margin = Math.max(0, item.unitPriceNpr - item.unitCostNpr);
+        const settings = prod?.commissionSettings || {
+          customerCashbackType: 'fixed' as const,
+          customerCashbackValue: Math.round(margin * 0.15),
+          referralPoolType: 'fixed' as const,
+          referralPoolValue: Math.round(margin * 0.35),
+          level1Percentage: 50,
+          level2Percentage: 30,
+          level3Percentage: 20,
+          shopkeeperCommissionType: 'fixed' as const,
+          shopkeeperCommissionValue: Math.round(margin * 0.20),
+          companyShareNpr: Math.round(margin * 0.20),
+          permittedExpensesNpr: Math.round(margin * 0.10)
+        };
+
+        const qty = item.quantity;
+        const itemCashback = Math.round(
+          (settings.customerCashbackType === 'percentage'
+            ? (item.unitPriceNpr * settings.customerCashbackValue) / 100
+            : settings.customerCashbackValue) * qty
+        );
+
+        const poolTotal = Math.round(
+          (settings.referralPoolType === 'percentage'
+            ? (margin * settings.referralPoolValue) / 100
+            : settings.referralPoolValue) * qty
+        );
+
+        const l1Npr = Math.round((poolTotal * settings.level1Percentage) / 100);
+        const l2Npr = Math.round((poolTotal * settings.level2Percentage) / 100);
+        const l3Npr = Math.round((poolTotal * settings.level3Percentage) / 100);
+
+        const skComm = Math.round(
+          (settings.shopkeeperCommissionType === 'percentage'
+            ? (item.unitPriceNpr * settings.shopkeeperCommissionValue) / 100
+            : settings.shopkeeperCommissionValue) * qty
+        );
+
+        // 1. Credit Cashback to Buyer
+        if (buyer && itemCashback > 0) {
+          if (!db.customerWallets[buyer.id]) {
+            db.customerWallets[buyer.id] = {
+              userId: buyer.id,
+              cashbackAvailableNpr: 0,
+              cashbackPendingNpr: 0,
+              cashbackTotalEarnedNpr: 0,
+              incomeAvailableNpr: 0,
+              incomePendingNpr: 0,
+              incomeTotalEarnedNpr: 0,
+              incomeTotalWithdrawnNpr: 0,
+              updatedAt: now
+            };
+          }
+          db.customerWallets[buyer.id].cashbackAvailableNpr += itemCashback;
+          db.customerWallets[buyer.id].cashbackTotalEarnedNpr += itemCashback;
+          db.customerWallets[buyer.id].updatedAt = now;
+
+          db.cashbackLedger.unshift({
+            id: `cb_${order.id}_${item.productId}_${Date.now()}`,
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            customerId: buyer.id,
+            customerMobile: buyer.mobile,
+            productId: item.productId,
+            productName: item.productName,
+            amountNpr: itemCashback,
+            type: 'credit',
+            status: 'credited',
+            description: `Cashback for purchasing ${qty}x ${item.productName}`,
+            createdAt: now
+          });
+
+          db.notifications.unshift({
+            id: `notif_cb_${Date.now()}`,
+            recipientUserId: buyer.id,
+            title: 'Cashback Credited!',
+            message: `NPR ${itemCashback} cashback credited to your Cashback Wallet for Order #${order.orderNumber}.`,
+            type: 'cashback',
+            read: false,
+            createdAt: now
+          });
+        }
+
+        // 2. Credit Level 1 Referral Income
+        if (l1Sponsor && l1Npr > 0) {
+          if (!db.customerWallets[l1Sponsor.id]) {
+            db.customerWallets[l1Sponsor.id] = {
+              userId: l1Sponsor.id,
+              cashbackAvailableNpr: 0,
+              cashbackPendingNpr: 0,
+              cashbackTotalEarnedNpr: 0,
+              incomeAvailableNpr: 0,
+              incomePendingNpr: 0,
+              incomeTotalEarnedNpr: 0,
+              incomeTotalWithdrawnNpr: 0,
+              updatedAt: now
+            };
+          }
+          db.customerWallets[l1Sponsor.id].incomeAvailableNpr += l1Npr;
+          db.customerWallets[l1Sponsor.id].incomeTotalEarnedNpr += l1Npr;
+          db.customerWallets[l1Sponsor.id].updatedAt = now;
+
+          db.referralLedger.unshift({
+            id: `ref_l1_${order.id}_${item.productId}_${Date.now()}`,
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            buyerCustomerId: buyer?.id || order.customerId,
+            beneficiaryCustomerId: l1Sponsor.id,
+            beneficiaryMobile: l1Sponsor.mobile,
+            referralLevel: 1,
+            amountNpr: l1Npr,
+            type: 'credit',
+            status: 'credited',
+            description: `Level 1 traditional business commission from direct referral purchase of ${qty}x ${item.productName}`,
+            createdAt: now
+          });
+
+          db.notifications.unshift({
+            id: `notif_l1_${Date.now()}`,
+            recipientUserId: l1Sponsor.id,
+            title: 'Level 1 Income Credited!',
+            message: `NPR ${l1Npr} Level 1 commission received from direct referral purchase (Order #${order.orderNumber}).`,
+            type: 'commission',
+            read: false,
+            createdAt: now
+          });
+        }
+
+        // 3. Credit Level 2 Referral Income
+        if (l2Sponsor && l2Npr > 0) {
+          if (!db.customerWallets[l2Sponsor.id]) {
+            db.customerWallets[l2Sponsor.id] = {
+              userId: l2Sponsor.id,
+              cashbackAvailableNpr: 0,
+              cashbackPendingNpr: 0,
+              cashbackTotalEarnedNpr: 0,
+              incomeAvailableNpr: 0,
+              incomePendingNpr: 0,
+              incomeTotalEarnedNpr: 0,
+              incomeTotalWithdrawnNpr: 0,
+              updatedAt: now
+            };
+          }
+          db.customerWallets[l2Sponsor.id].incomeAvailableNpr += l2Npr;
+          db.customerWallets[l2Sponsor.id].incomeTotalEarnedNpr += l2Npr;
+          db.customerWallets[l2Sponsor.id].updatedAt = now;
+
+          db.referralLedger.unshift({
+            id: `ref_l2_${order.id}_${item.productId}_${Date.now()}`,
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            buyerCustomerId: buyer?.id || order.customerId,
+            beneficiaryCustomerId: l2Sponsor.id,
+            beneficiaryMobile: l2Sponsor.mobile,
+            referralLevel: 2,
+            amountNpr: l2Npr,
+            type: 'credit',
+            status: 'credited',
+            description: `Level 2 traditional business commission from team purchase of ${qty}x ${item.productName}`,
+            createdAt: now
+          });
+
+          db.notifications.unshift({
+            id: `notif_l2_${Date.now()}`,
+            recipientUserId: l2Sponsor.id,
+            title: 'Level 2 Income Credited!',
+            message: `NPR ${l2Npr} Level 2 commission received (Order #${order.orderNumber}).`,
+            type: 'commission',
+            read: false,
+            createdAt: now
+          });
+        }
+
+        // 4. Credit Level 3 Referral Income
+        if (l3Sponsor && l3Npr > 0) {
+          if (!db.customerWallets[l3Sponsor.id]) {
+            db.customerWallets[l3Sponsor.id] = {
+              userId: l3Sponsor.id,
+              cashbackAvailableNpr: 0,
+              cashbackPendingNpr: 0,
+              cashbackTotalEarnedNpr: 0,
+              incomeAvailableNpr: 0,
+              incomePendingNpr: 0,
+              incomeTotalEarnedNpr: 0,
+              incomeTotalWithdrawnNpr: 0,
+              updatedAt: now
+            };
+          }
+          db.customerWallets[l3Sponsor.id].incomeAvailableNpr += l3Npr;
+          db.customerWallets[l3Sponsor.id].incomeTotalEarnedNpr += l3Npr;
+          db.customerWallets[l3Sponsor.id].updatedAt = now;
+
+          db.referralLedger.unshift({
+            id: `ref_l3_${order.id}_${item.productId}_${Date.now()}`,
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            buyerCustomerId: buyer?.id || order.customerId,
+            beneficiaryCustomerId: l3Sponsor.id,
+            beneficiaryMobile: l3Sponsor.mobile,
+            referralLevel: 3,
+            amountNpr: l3Npr,
+            type: 'credit',
+            status: 'credited',
+            description: `Level 3 traditional business commission from team purchase of ${qty}x ${item.productName}`,
+            createdAt: now
+          });
+
+          db.notifications.unshift({
+            id: `notif_l3_${Date.now()}`,
+            recipientUserId: l3Sponsor.id,
+            title: 'Level 3 Income Credited!',
+            message: `NPR ${l3Npr} Level 3 commission received (Order #${order.orderNumber}).`,
+            type: 'commission',
+            read: false,
+            createdAt: now
+          });
+        }
+
+        // 5. Credit Shopkeeper Sales Commission
+        if (item.shopkeeperUserId && skComm > 0) {
+          if (!db.shopkeeperWallets[item.shopkeeperUserId]) {
+            db.shopkeeperWallets[item.shopkeeperUserId] = {
+              userId: item.shopkeeperUserId,
+              availableCommissionNpr: 0,
+              pendingCommissionNpr: 0,
+              totalEarnedNpr: 0,
+              totalWithdrawnNpr: 0,
+              updatedAt: now
+            };
+          }
+          db.shopkeeperWallets[item.shopkeeperUserId].availableCommissionNpr += skComm;
+          db.shopkeeperWallets[item.shopkeeperUserId].totalEarnedNpr += skComm;
+          db.shopkeeperWallets[item.shopkeeperUserId].updatedAt = now;
+
+          db.shopkeeperLedger.unshift({
+            id: `sk_comm_${order.id}_${item.productId}_${Date.now()}`,
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            shopkeeperUserId: item.shopkeeperUserId,
+            shopName: item.shopName,
+            productId: item.productId,
+            productName: item.productName,
+            amountNpr: skComm,
+            type: 'credit',
+            status: 'credited',
+            description: `Shopkeeper sales commission for ${qty}x ${item.productName}`,
+            createdAt: now
+          });
+        }
+      }
+
+      order.commissionProcessed = true;
+    }
+
+    order.orderStatus = 'completed';
+    order.completedAt = now;
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      message: 'Commissions and cashbacks released successfully',
+      order
+    } as unknown as T;
+  }
+
   // --- WALLETS ---
   if (path === '/api/wallets/customer' && method === 'GET') {
-    const wallet = (currentUser && db.customerWallets[currentUser.id]) || {
-      userId: currentUser?.id || 'user_cust_1',
+    const targetUserId = currentUser?.id || 'user_cust_1';
+    const wallet = (currentUser && db.customerWallets[currentUser.id]) || db.customerWallets[targetUserId] || {
+      userId: targetUserId,
       cashbackAvailableNpr: 140,
       cashbackPendingNpr: 0,
       cashbackTotalEarnedNpr: 140,
@@ -789,9 +1404,171 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     return {
       success: true,
       wallet,
-      cashbackHistory: db.cashbackLedger,
-      referralIncomeHistory: db.referralLedger,
-      withdrawals: db.withdrawals.filter(w => w.userId === currentUser?.id)
+      cashbackHistory: (db.cashbackLedger || []).filter(c => c.customerId === targetUserId),
+      referralIncomeHistory: (db.referralLedger || []).filter(r => r.beneficiaryCustomerId === targetUserId),
+      withdrawals: (db.withdrawals || []).filter(w => w.userId === targetUserId)
+    } as unknown as T;
+  }
+
+  if (path === '/api/wallets/customer/referral-tree' && method === 'GET') {
+    const targetUserId = url.searchParams.get('userId') || currentUser?.id || 'user_cust_1';
+    const targetUser = db.users.find(u => u.id === targetUserId) || db.users.find(u => u.role === 'customer');
+    if (!targetUser) throw new Error('Customer user not found');
+
+    const cleanDigits = (m?: string) => (m || '').replace(/\D/g, '').slice(-10);
+    const matchesMobileOrRef = (userMobile?: string, userRef?: string, target?: string) => {
+      if (!target) return false;
+      if (userMobile === target || userRef === target) return true;
+      const targetClean = cleanDigits(target);
+      if (!targetClean || targetClean.length < 8) return false;
+      return cleanDigits(userMobile) === targetClean || cleanDigits(userRef) === targetClean;
+    };
+
+    const l1Users = db.users.filter(u =>
+      u.id !== targetUser.id &&
+      u.sponsorReferralId &&
+      matchesMobileOrRef(targetUser.mobile, targetUser.referralId, u.sponsorReferralId)
+    );
+
+    const l2Users = db.users.filter(u =>
+      u.id !== targetUser.id &&
+      !l1Users.some(l1 => l1.id === u.id) &&
+      u.sponsorReferralId &&
+      l1Users.some(l1 => matchesMobileOrRef(l1.mobile, l1.referralId, u.sponsorReferralId))
+    );
+
+    const l3Users = db.users.filter(u =>
+      u.id !== targetUser.id &&
+      !l1Users.some(l1 => l1.id === u.id) &&
+      !l2Users.some(l2 => l2.id === u.id) &&
+      u.sponsorReferralId &&
+      l2Users.some(l2 => matchesMobileOrRef(l2.mobile, l2.referralId, u.sponsorReferralId))
+    );
+
+    const calcLevelStats = (users: typeof l1Users, level: 1 | 2 | 3) => {
+      const userIds = users.map(u => u.id);
+      const completedOrders = (db.orders || []).filter(o => userIds.includes(o.customerId) && o.orderStatus === 'completed');
+      const salesVolume = completedOrders.reduce((acc, o) => acc + (o.totalAmountNpr || 0), 0);
+      const commissionsEarned = (db.referralLedger || [])
+        .filter(r => r.beneficiaryCustomerId === targetUser.id && r.referralLevel === level && r.type === 'credit')
+        .reduce((acc, r) => acc + (r.amountNpr || 0), 0);
+
+      return {
+        membersCount: users.length,
+        salesCount: completedOrders.length,
+        salesVolumeNpr: salesVolume,
+        commissionsEarnedNpr: commissionsEarned,
+        members: users.map(u => ({
+          id: u.id,
+          name: u.name,
+          mobile: u.mobile,
+          createdAt: u.createdAt,
+          status: u.status
+        }))
+      };
+    };
+
+    const level1 = calcLevelStats(l1Users, 1);
+    const level2 = calcLevelStats(l2Users, 2);
+    const level3 = calcLevelStats(l3Users, 3);
+
+    return {
+      success: true,
+      customer: {
+        id: targetUser.id,
+        name: targetUser.name,
+        mobile: targetUser.mobile,
+        referralId: targetUser.referralId,
+        sponsorReferralId: targetUser.sponsorReferralId
+      },
+      tree: {
+        level1,
+        level2,
+        level3,
+        totalNetworkMembers: l1Users.length + l2Users.length + l3Users.length,
+        totalNetworkCommissionNpr: level1.commissionsEarnedNpr + level2.commissionsEarnedNpr + level3.commissionsEarnedNpr
+      }
+    } as unknown as T;
+  }
+
+  if (path.match(/^\/api\/admin\/customers\/[^/]+\/referral-tree$/) && method === 'GET') {
+    const targetUserId = path.split('/')[4];
+    const targetUser = db.users.find(u => u.id === targetUserId);
+    if (!targetUser) throw new Error('Customer user not found');
+
+    const cleanDigits = (m?: string) => (m || '').replace(/\D/g, '').slice(-10);
+    const matchesMobileOrRef = (userMobile?: string, userRef?: string, target?: string) => {
+      if (!target) return false;
+      if (userMobile === target || userRef === target) return true;
+      const targetClean = cleanDigits(target);
+      if (!targetClean || targetClean.length < 8) return false;
+      return cleanDigits(userMobile) === targetClean || cleanDigits(userRef) === targetClean;
+    };
+
+    const l1Users = db.users.filter(u =>
+      u.id !== targetUser.id &&
+      u.sponsorReferralId &&
+      matchesMobileOrRef(targetUser.mobile, targetUser.referralId, u.sponsorReferralId)
+    );
+
+    const l2Users = db.users.filter(u =>
+      u.id !== targetUser.id &&
+      !l1Users.some(l1 => l1.id === u.id) &&
+      u.sponsorReferralId &&
+      l1Users.some(l1 => matchesMobileOrRef(l1.mobile, l1.referralId, u.sponsorReferralId))
+    );
+
+    const l3Users = db.users.filter(u =>
+      u.id !== targetUser.id &&
+      !l1Users.some(l1 => l1.id === u.id) &&
+      !l2Users.some(l2 => l2.id === u.id) &&
+      u.sponsorReferralId &&
+      l2Users.some(l2 => matchesMobileOrRef(l2.mobile, l2.referralId, u.sponsorReferralId))
+    );
+
+    const calcLevelStats = (users: typeof l1Users, level: 1 | 2 | 3) => {
+      const userIds = users.map(u => u.id);
+      const completedOrders = (db.orders || []).filter(o => userIds.includes(o.customerId) && o.orderStatus === 'completed');
+      const salesVolume = completedOrders.reduce((acc, o) => acc + (o.totalAmountNpr || 0), 0);
+      const commissionsEarned = (db.referralLedger || [])
+        .filter(r => r.beneficiaryCustomerId === targetUser.id && r.referralLevel === level && r.type === 'credit')
+        .reduce((acc, r) => acc + (r.amountNpr || 0), 0);
+
+      return {
+        membersCount: users.length,
+        salesCount: completedOrders.length,
+        salesVolumeNpr: salesVolume,
+        commissionsEarnedNpr: commissionsEarned,
+        members: users.map(u => ({
+          id: u.id,
+          name: u.name,
+          mobile: u.mobile,
+          createdAt: u.createdAt,
+          status: u.status
+        }))
+      };
+    };
+
+    const level1 = calcLevelStats(l1Users, 1);
+    const level2 = calcLevelStats(l2Users, 2);
+    const level3 = calcLevelStats(l3Users, 3);
+
+    return {
+      success: true,
+      customer: {
+        id: targetUser.id,
+        name: targetUser.name,
+        mobile: targetUser.mobile,
+        referralId: targetUser.referralId,
+        sponsorReferralId: targetUser.sponsorReferralId
+      },
+      tree: {
+        level1,
+        level2,
+        level3,
+        totalNetworkMembers: l1Users.length + l2Users.length + l3Users.length,
+        totalNetworkCommissionNpr: level1.commissionsEarnedNpr + level2.commissionsEarnedNpr + level3.commissionsEarnedNpr
+      }
     } as unknown as T;
   }
 
@@ -855,15 +1632,36 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
 
   // --- ADMIN ---
   if (path === '/api/admin/overview' && method === 'GET') {
+    const pendingShopkeepers = (db.shopkeeperProfiles || []).filter(s => s.status === 'pending').length;
+    const pendingProducts = (db.products || []).filter(p => p.status === 'pending_approval').length;
+    const approvedShopkeepers = (db.shopkeeperProfiles || []).filter(s => s.status === 'approved').length;
+    const approvedProducts = (db.products || []).filter(p => p.status === 'approved').length;
+    const completedOrders = (db.orders || []).filter(o => o.orderStatus === 'completed');
+    const totalSalesValue = completedOrders.reduce((sum, o) => sum + (o.totalAmountNpr || 0), 0);
+
     return {
       success: true,
       stats: {
-        totalRevenueNpr: 54000,
+        totalRevenueNpr: totalSalesValue || 54000,
+        totalSalesValue: totalSalesValue || 54000,
+        totalSalesCount: completedOrders.length,
         totalOrders: db.orders.length,
         totalCustomers: db.users.filter(u => u.role === 'customer').length,
+        totalShopkeepers: db.users.filter(u => u.role === 'shopkeeper').length,
+        approvedShopkeepers,
+        pendingShopkeepers,
         totalShops: db.shops.length,
-        pendingApprovals: db.products.filter(p => p.status === 'pending_approval').length,
-        pendingWithdrawals: db.withdrawals.filter(w => w.status === 'pending').length
+        totalProducts: db.products.length,
+        approvedProducts,
+        pendingProducts,
+        pendingApprovals: pendingShopkeepers + pendingProducts,
+        totalCashbackAwarded: 450,
+        totalReferralCommissionAwarded: 720,
+        totalShopkeeperCommissionAwarded: 1200,
+        pendingWithdrawals: db.withdrawals.filter(w => w.status === 'pending').length,
+        pendingWithdrawalCount: db.withdrawals.filter(w => w.status === 'pending').length,
+        pendingWithdrawalAmount: db.withdrawals.filter(w => w.status === 'pending').reduce((s, w) => s + w.amountNpr, 0),
+        paidWithdrawalAmount: db.withdrawals.filter(w => w.status === 'paid').reduce((s, w) => s + w.amountNpr, 0)
       }
     } as unknown as T;
   }
@@ -881,9 +1679,82 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
   }
 
   if (path === '/api/admin/shopkeepers' && method === 'GET') {
+    const shopkeepers = (db.shopkeeperProfiles || []).map(s => {
+      const user = db.users.find(u => u.id === s.userId);
+      const shop = db.shops.find(sh => sh.shopkeeperUserId === s.userId);
+      const wallet = db.shopkeeperWallets[s.userId] || {
+        availableCommissionNpr: 0,
+        totalEarnedNpr: 0,
+        totalWithdrawnNpr: 0
+      };
+      const productsCount = db.products.filter(p => p.shopkeeperUserId === s.userId).length;
+
+      return {
+        ...s,
+        user,
+        shop,
+        wallet,
+        productsCount
+      };
+    });
+
     return {
       success: true,
-      shopkeepers: db.shopkeeperProfiles
+      shopkeepers
+    } as unknown as T;
+  }
+
+  if (path.match(/^\/api\/admin\/shopkeepers\/[^/]+\/review$/) && method === 'PUT') {
+    const skId = path.split('/')[4];
+    const sk = (db.shopkeeperProfiles || []).find(s => s.id === skId || s.userId === skId);
+    if (!sk) {
+      throw new Error('Shopkeeper application not found');
+    }
+
+    const newStatus = body.status;
+    sk.status = newStatus;
+    if (newStatus === 'rejected') {
+      sk.rejectionReason = body.rejectionReason || 'Application details could not be verified';
+    }
+
+    const user = db.users.find(u => u.id === sk.userId);
+    if (user) {
+      user.status = newStatus === 'approved' ? 'active' : 'suspended';
+    }
+
+    const shop = db.shops.find(s => s.shopkeeperUserId === sk.userId);
+    if (shop) {
+      shop.isOpen = newStatus === 'approved';
+    }
+
+    const now = new Date().toISOString();
+    db.notifications.unshift({
+      id: `notif_skrev_${Date.now()}`,
+      recipientUserId: sk.userId,
+      title: newStatus === 'approved' ? '🎉 Shopkeeper Application Approved!' : 'Shopkeeper Application Update',
+      message: newStatus === 'approved'
+        ? `Congratulations! Your store "${sk.shopName}" is now officially approved and open. Your submitted products can now be configured and listed!`
+        : `Your shop application was rejected. Reason: ${sk.rejectionReason}`,
+      type: 'system',
+      read: false,
+      createdAt: now
+    });
+
+    db.auditLogs.unshift({
+      id: `audit_sk_${sk.id}_${Date.now()}`,
+      action: newStatus === 'approved' ? 'SHOPKEEPER_APPROVED' : 'SHOPKEEPER_REJECTED',
+      actorUserId: currentUser?.id || 'user_admin_1',
+      actorRole: 'admin',
+      details: `Shopkeeper ${sk.fullName} (${sk.shopName}) status set to ${newStatus}`,
+      entityType: 'shopkeeper',
+      entityId: sk.id,
+      timestamp: now
+    });
+
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      shopkeeper: sk
     } as unknown as T;
   }
 
@@ -955,6 +1826,144 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     db.notifications.forEach(n => { n.read = true; });
     saveLocalDatabase(db);
     return { success: true } as unknown as T;
+  }
+
+  // --- COUPONS ---
+  if (path === '/api/coupons/my-coupons' && method === 'GET') {
+    const userId = currentUser?.id || 'user_cust_1';
+    const now = new Date().toISOString();
+    db.coupons = db.coupons || [];
+    for (const c of db.coupons) {
+      if (c.status === 'available' && c.expiresAt < now) {
+        c.status = 'expired';
+      }
+    }
+    const userCoupons = db.coupons.filter(c => c.userId === userId);
+    return {
+      success: true,
+      coupons: userCoupons,
+      rule: db.cashbackCouponRule
+    } as unknown as T;
+  }
+
+  if (path === '/api/coupons/validate' && method === 'POST') {
+    const { code, cartTotalNpr } = body;
+    const userId = currentUser?.id || 'user_cust_1';
+    if (!code) throw new Error('Coupon code is required');
+    const cleanCode = code.trim().toUpperCase();
+    const subtotal = Number(cartTotalNpr) || 0;
+    const now = new Date().toISOString();
+    const coupon = (db.coupons || []).find(
+      c => c.code.toUpperCase() === cleanCode && (c.userId === userId || c.userId === 'all')
+    );
+    if (!coupon) throw new Error('Invalid coupon code. Please check and try again.');
+    if (coupon.status === 'used') throw new Error('This coupon has already been used on a previous order.');
+    if (coupon.expiresAt < now || coupon.status === 'expired') throw new Error('This cashback coupon has expired.');
+    if (subtotal < coupon.minOrderAmountNpr) {
+      throw new Error(`Minimum order amount of NPR ${coupon.minOrderAmountNpr} required to apply this coupon.`);
+    }
+    let discountNpr = Math.round((subtotal * coupon.discountPercentage) / 100);
+    if (coupon.maxDiscountNpr && discountNpr > coupon.maxDiscountNpr) discountNpr = coupon.maxDiscountNpr;
+    discountNpr = Math.min(discountNpr, subtotal);
+    return {
+      success: true,
+      valid: true,
+      discountNpr,
+      finalTotalNpr: subtotal - discountNpr,
+      coupon: {
+        code: coupon.code,
+        discountPercentage: coupon.discountPercentage,
+        level: coupon.level,
+        expiresAt: coupon.expiresAt
+      }
+    } as unknown as T;
+  }
+
+  if (path === '/api/coupons/admin/rules' && method === 'GET') {
+    return {
+      success: true,
+      rule: db.cashbackCouponRule
+    } as unknown as T;
+  }
+
+  if (path === '/api/coupons/admin/rules' && method === 'PUT') {
+    db.cashbackCouponRule = {
+      id: db.cashbackCouponRule?.id || 'rule_cb_default',
+      enabled: body.enabled !== undefined ? !!body.enabled : true,
+      title: body.title || '3-Level Purchase Cashback Coupon Engine',
+      level1Percentage: Number(body.level1Percentage) >= 0 ? Number(body.level1Percentage) : 10,
+      level2Percentage: Number(body.level2Percentage) >= 0 ? Number(body.level2Percentage) : 15,
+      level3Percentage: Number(body.level3Percentage) >= 0 ? Number(body.level3Percentage) : 20,
+      level1MinSpendNpr: Number(body.level1MinSpendNpr) >= 0 ? Number(body.level1MinSpendNpr) : 0,
+      level2MinSpendNpr: Number(body.level2MinSpendNpr) >= 0 ? Number(body.level2MinSpendNpr) : 1000,
+      level3MinSpendNpr: Number(body.level3MinSpendNpr) >= 0 ? Number(body.level3MinSpendNpr) : 2500,
+      validityDays: Number(body.validityDays) > 0 ? Number(body.validityDays) : 30,
+      minOrderToApplyNpr: Number(body.minOrderToApplyNpr) >= 0 ? Number(body.minOrderToApplyNpr) : 200,
+      maxDiscountNpr: body.maxDiscountNpr ? Number(body.maxDiscountNpr) : 1000,
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      message: '3-Level Cashback Coupon settings updated successfully',
+      rule: db.cashbackCouponRule
+    } as unknown as T;
+  }
+
+  if (path === '/api/coupons/admin/list' && method === 'GET') {
+    const coupons = [...(db.coupons || [])];
+    const availableCount = coupons.filter(c => c.status === 'available').length;
+    const usedCount = coupons.filter(c => c.status === 'used').length;
+    const totalSavedNpr = coupons.reduce((sum, c) => sum + (c.discountAppliedNpr || 0), 0);
+    return {
+      success: true,
+      coupons,
+      rule: db.cashbackCouponRule,
+      stats: {
+        totalIssued: coupons.length,
+        availableCount,
+        usedCount,
+        totalSavedNpr
+      }
+    } as unknown as T;
+  }
+
+  if (path === '/api/coupons/admin/create-custom' && method === 'POST') {
+    const { targetUserId, discountPercentage, level, minOrderAmountNpr, maxDiscountNpr, validityDays, customCode } = body;
+    let targetUser = db.users.find(u => u.id === targetUserId);
+    if (!targetUser && targetUserId !== 'all') {
+      targetUser = db.users.find(u => u.role === 'customer');
+    }
+    const lvl = (Number(level) === 1 || Number(level) === 2 || Number(level) === 3) ? (Number(level) as 1 | 2 | 3) : 1;
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const code = customCode?.trim().toUpperCase() || `JKM-ADMIN-L${lvl}-${randomSuffix}`;
+    const now = new Date();
+    const days = Number(validityDays) || 30;
+    const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+    const newCoupon: CashbackCoupon = {
+      id: `cpn_custom_${Date.now()}`,
+      code,
+      userId: targetUser ? targetUser.id : (targetUserId || 'all'),
+      userName: targetUser ? targetUser.name : 'All Customers',
+      userMobile: targetUser ? targetUser.mobile : 'All',
+      sourceOrderId: 'admin_manual',
+      sourceOrderNumber: 'ADMIN-PROMO',
+      level: lvl,
+      discountPercentage: Number(discountPercentage) || 10,
+      minOrderAmountNpr: Number(minOrderAmountNpr) || 200,
+      maxDiscountNpr: maxDiscountNpr ? Number(maxDiscountNpr) : 1000,
+      status: 'available',
+      expiresAt,
+      createdAt: now.toISOString()
+    };
+    db.coupons = db.coupons || [];
+    db.coupons.unshift(newCoupon);
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      message: `Cashback Coupon ${newCoupon.code} created successfully`,
+      coupon: newCoupon
+    } as unknown as T;
   }
 
   // Generic fallback if not explicitly defined

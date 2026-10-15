@@ -55,7 +55,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
             </div>
             <div>
               <p className="font-extrabold text-slate-950 text-sm sm:text-base leading-tight">
-                JK Mission — Smart Retail Network
+                JK Mission — Smart Retail Traditional Business
               </p>
               <p className="text-[11px] text-slate-900 font-semibold">
                 Smart Retail, Cashback & Referral Platform • Currency: NPR (रु)

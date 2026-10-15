@@ -207,20 +207,109 @@ export const AdminProducts: React.FC = () => {
     }
   };
 
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending_approval' | 'approved' | 'rejected'>('all');
+
+  const pendingCount = products.filter(p => p.status === 'pending_approval').length;
+  const approvedCount = products.filter(p => p.status === 'approved').length;
+  const rejectedCount = products.filter(p => p.status === 'rejected').length;
+
+  const sortedProducts = [...products].sort((a, b) => {
+    if (a.status === 'pending_approval' && b.status !== 'pending_approval') return -1;
+    if (a.status !== 'pending_approval' && b.status === 'pending_approval') return 1;
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
+
+  const filteredProducts = sortedProducts.filter(p => {
+    if (statusFilter === 'all') return true;
+    return p.status === statusFilter;
+  });
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Title */}
-      <div>
-        <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
-          Critical Financial Oversight
-        </span>
-        <h1 className="text-3xl font-black text-slate-950 mt-0.5">
-          Product Approvals & Commission Settings
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Shopkeeper commissions are NOT fixed globally. Every single product has its own custom cashback, 3-level referral pool, and merchant commission configured here.
-        </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      {/* Title & Filter Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
+            Critical Financial Oversight
+          </span>
+          <h1 className="text-3xl font-black text-slate-950 mt-0.5">
+            Product Approvals & Commission Settings
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Shopkeeper commissions are NOT fixed globally. Every single product has its own custom cashback, 3-level referral pool, and merchant commission configured here.
+          </p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200 self-start sm:self-auto text-xs font-bold">
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              statusFilter === 'all'
+                ? 'bg-white text-slate-950 shadow-xs'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            All ({products.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('pending_approval')}
+            className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1 ${
+              statusFilter === 'pending_approval'
+                ? 'bg-amber-400 text-slate-950 shadow-xs'
+                : 'text-amber-800 hover:text-amber-950'
+            }`}
+          >
+            <span>Pending</span>
+            {pendingCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-black">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setStatusFilter('approved')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              statusFilter === 'approved'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            Approved ({approvedCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter('rejected')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              statusFilter === 'rejected'
+                ? 'bg-red-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            Rejected ({rejectedCount})
+          </button>
+        </div>
       </div>
+
+      {/* Alert banner if products are waiting */}
+      {pendingCount > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-center justify-between text-xs text-amber-900 shadow-xs">
+          <div className="flex items-center space-x-2.5">
+            <ShoppingBag className="w-5 h-5 text-amber-600 shrink-0 animate-pulse" />
+            <span>
+              <strong>{pendingCount} Product Submission{pendingCount > 1 ? 's' : ''} Awaiting Review: </strong>
+              Please configure product selling price, cashback, referral pool, and merchant commission before making them live.
+            </span>
+          </div>
+          {statusFilter !== 'pending_approval' && (
+            <button
+              onClick={() => setStatusFilter('pending_approval')}
+              className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold shrink-0 ml-2"
+            >
+              Show Pending
+            </button>
+          )}
+        </div>
+      )}
 
       {feedbackMsg && (
         <div className={`p-4 rounded-2xl text-xs font-bold flex items-center space-x-2 ${
@@ -235,6 +324,10 @@ export const AdminProducts: React.FC = () => {
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-xs text-slate-500">Loading catalog items...</div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="p-12 text-center text-slate-400 text-xs">
+            No products found matching filter &quot;{statusFilter}&quot;.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -250,7 +343,7 @@ export const AdminProducts: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((p) => {
+                {filteredProducts.map((p) => {
                   const margin = p.finalSellingPriceNpr - p.costPriceNpr;
                   return (
                     <tr key={p.id} className="hover:bg-slate-50/50">

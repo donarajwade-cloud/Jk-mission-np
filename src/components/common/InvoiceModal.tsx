@@ -1,7 +1,7 @@
 import React from 'react';
 import { Order } from '../../types/index.ts';
 import { formatNPR, formatNepaliDate, formatNepalMobile } from '../../utils/format.ts';
-import { X, Printer, CheckCircle, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { X, Printer, CheckCircle, Clock, AlertTriangle, ShieldCheck, Ticket, Sparkles } from 'lucide-react';
 
 interface InvoiceModalProps {
   order: Order | null;
@@ -143,21 +143,60 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
           {/* Totals Breakdown */}
           <div className="flex justify-end mb-6">
-            <div className="w-64 space-y-2 text-xs">
+            <div className="w-72 space-y-2 text-xs">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal:</span>
-                <span className="font-bold text-slate-900">{formatNPR(order.totalAmountNpr)}</span>
+                <span className="font-bold text-slate-900">
+                  {formatNPR(order.totalAmountNpr + (order.couponDiscountNpr || 0))}
+                </span>
               </div>
+
+              {order.couponDiscountNpr && order.couponDiscountNpr > 0 ? (
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span className="flex items-center space-x-1">
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>Coupon Discount ({order.couponCode}):</span>
+                  </span>
+                  <span>-{formatNPR(order.couponDiscountNpr)}</span>
+                </div>
+              ) : null}
+
               <div className="flex justify-between text-slate-600">
                 <span>Standard Delivery:</span>
                 <span className="font-bold text-emerald-600">FREE</span>
               </div>
               <div className="flex justify-between text-slate-900 font-black text-base border-t border-slate-200 pt-2">
-                <span>Grand Total:</span>
+                <span>Grand Total Paid:</span>
                 <span className="text-amber-600">{formatNPR(order.totalAmountNpr)}</span>
               </div>
             </div>
           </div>
+
+          {/* Next Purchase Cashback Coupon Award Voucher (if unlocked on this order) */}
+          {order.awardedCoupon && (
+            <div className="border border-amber-300 bg-amber-50/70 p-4 rounded-2xl mb-6 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-amber-950 flex items-center space-x-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  <span>Next-Purchase Cashback Voucher Awarded</span>
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-400 text-slate-950">
+                  Level {order.awardedCoupon.level} Tier
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <span className="font-mono text-sm font-black text-slate-900 bg-white px-3 py-1 rounded-lg border border-amber-200">
+                  {order.awardedCoupon.code}
+                </span>
+                <span className="text-emerald-700 font-extrabold text-sm">
+                  {order.awardedCoupon.discountPercentage}% OFF Next Order
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                Automatic cashback coupon unlocked from this verified order. Redeemable on next purchase.
+              </p>
+            </div>
+          )}
 
           {/* Admin Commission Snapshot Audit (Only shown when requested by Admin) */}
           {showAdminCommissionSnapshot && (

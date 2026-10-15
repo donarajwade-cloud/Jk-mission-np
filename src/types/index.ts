@@ -142,9 +142,53 @@ export interface Order {
     district: string;
   };
   commissionProcessed: boolean;
+  couponCode?: string;
+  couponDiscountNpr?: number;
+  awardedCoupon?: {
+    code: string;
+    discountPercentage: number;
+    level: 1 | 2 | 3;
+  };
   createdAt: string;
   completedAt?: string;
   refundReason?: string;
+}
+
+export interface CashbackCouponRule {
+  id: string;
+  enabled: boolean;
+  title: string;
+  level1Percentage: number; // e.g. 10%
+  level2Percentage: number; // e.g. 15%
+  level3Percentage: number; // e.g. 20%
+  level1MinSpendNpr: number; // min order amount to qualify for level 1 (e.g. 0)
+  level2MinSpendNpr: number; // min order amount to qualify for level 2 (e.g. 1000)
+  level3MinSpendNpr: number; // min order amount to qualify for level 3 (e.g. 2500)
+  validityDays: number; // e.g. 30 days
+  minOrderToApplyNpr: number; // min order total to redeem this coupon (e.g. 200)
+  maxDiscountNpr?: number; // max discount cap (e.g. 1000)
+  updatedAt: string;
+}
+
+export interface CashbackCoupon {
+  id: string;
+  code: string; // e.g. "JKMCB-L1-82914"
+  userId: string;
+  userName: string;
+  userMobile: string;
+  sourceOrderId: string;
+  sourceOrderNumber: string;
+  level: 1 | 2 | 3;
+  discountPercentage: number;
+  minOrderAmountNpr: number;
+  maxDiscountNpr?: number;
+  status: 'available' | 'used' | 'expired';
+  usedInOrderId?: string;
+  usedInOrderNumber?: string;
+  usedAt?: string;
+  discountAppliedNpr?: number;
+  expiresAt: string;
+  createdAt: string;
 }
 
 export interface CashbackLedgerEntry {

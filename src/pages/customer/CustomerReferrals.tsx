@@ -52,13 +52,13 @@ export const CustomerReferrals: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
-            Network & Downline Team
+            Traditional Business Team
           </span>
           <h1 className="text-3xl font-black text-slate-950 mt-0.5">
             3-Level Referral Dashboard
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Track your network growth and verified sales commissions across Level 1, 2, and 3.
+            Track your traditional business growth and verified sales commissions across Level 1, 2, and 3.
           </p>
         </div>
 
@@ -210,7 +210,7 @@ export const CustomerReferrals: React.FC = () => {
         <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
         <span>
           <strong>Ethical Referral Rule: </strong>
-          Adding members or registering accounts does not generate commission. Commissions are credited exclusively upon completed, paid product sales in your network.
+          Adding members or registering accounts does not generate commission. Commissions are credited exclusively upon completed, paid product sales in your traditional business.
         </span>
       </div>
     </div>

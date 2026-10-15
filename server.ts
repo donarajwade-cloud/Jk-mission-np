@@ -11,6 +11,7 @@ import walletRoutes from './server/routes/walletRoutes.ts';
 import adminRoutes from './server/routes/adminRoutes.ts';
 import shopRoutes from './server/routes/shopRoutes.ts';
 import notificationRoutes from './server/routes/notificationRoutes.ts';
+import couponRoutes from './server/routes/couponRoutes.ts';
 import { loadDatabase } from './server/db.ts';
 
 dotenv.config();
@@ -37,6 +38,7 @@ app.use('/api/wallets', walletRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Health & System Info
 app.get('/api/health', (req, res) => {

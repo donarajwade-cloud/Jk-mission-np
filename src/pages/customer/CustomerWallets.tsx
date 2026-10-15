@@ -108,7 +108,7 @@ export const CustomerWallets: React.FC<{ onNavigateWithdraw: () => void }> = ({ 
           <WalletCardUI
             type="income"
             title="Available Income Balance"
-            subtitle="3-Level Team Network"
+            subtitle="3-Level Traditional Business"
             cardHolderName={user?.name || 'JK MISSION PROMOTER'}
             accountOrId={user?.referralId || user?.mobile || '98XXXXXXXX'}
             balanceNpr={wallet?.incomeAvailableNpr || 0}

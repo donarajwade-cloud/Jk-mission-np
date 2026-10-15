@@ -43,25 +43,116 @@ export const AdminShopkeepers: React.FC = () => {
     }
   };
 
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+
+  const pendingCount = shopkeepers.filter(s => s.status === 'pending').length;
+  const approvedCount = shopkeepers.filter(s => s.status === 'approved').length;
+  const rejectedCount = shopkeepers.filter(s => s.status === 'rejected').length;
+
+  const sortedShopkeepers = [...shopkeepers].sort((a, b) => {
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (a.status !== 'pending' && b.status === 'pending') return 1;
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
+
+  const filteredShopkeepers = sortedShopkeepers.filter(s => {
+    if (statusFilter === 'all') return true;
+    return s.status === statusFilter;
+  });
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      <div>
-        <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
-          Merchant Governance
-        </span>
-        <h1 className="text-3xl font-black text-slate-950 mt-0.5">
-          Shopkeeper Applications & Stores
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Review business credentials, PAN/VAT certificates, and approve stores to sell in Nepal.
-        </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
+            Merchant Governance
+          </span>
+          <h1 className="text-3xl font-black text-slate-950 mt-0.5">
+            Shopkeeper Applications & Stores
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Review business credentials, PAN/VAT certificates, and approve stores to sell in Nepal.
+          </p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200 self-start sm:self-auto text-xs font-bold">
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              statusFilter === 'all'
+                ? 'bg-white text-slate-950 shadow-xs'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            All ({shopkeepers.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('pending')}
+            className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1 ${
+              statusFilter === 'pending'
+                ? 'bg-amber-400 text-slate-950 shadow-xs'
+                : 'text-amber-800 hover:text-amber-950'
+            }`}
+          >
+            <span>Pending</span>
+            {pendingCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-black">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setStatusFilter('approved')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              statusFilter === 'approved'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            Approved ({approvedCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter('rejected')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              statusFilter === 'rejected'
+                ? 'bg-red-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            Rejected ({rejectedCount})
+          </button>
+        </div>
       </div>
+
+      {/* Alert banner if applications are pending */}
+      {pendingCount > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-center justify-between text-xs text-amber-900 shadow-xs">
+          <div className="flex items-center space-x-2.5">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0 animate-pulse" />
+            <span>
+              <strong>{pendingCount} Merchant Application{pendingCount > 1 ? 's' : ''} Awaiting Review: </strong>
+              Please inspect business details, PAN/VAT certificates, and click &quot;Review & Approve&quot; to activate their merchant account.
+            </span>
+          </div>
+          {statusFilter !== 'pending' && (
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold shrink-0 ml-2"
+            >
+              Show Pending
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-xs text-slate-500">Loading merchant applications...</div>
-        ) : shopkeepers.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs">No shopkeeper applications found.</div>
+        ) : filteredShopkeepers.length === 0 ? (
+          <div className="p-12 text-center text-slate-400 text-xs">
+            No shopkeeper applications found matching filter &quot;{statusFilter}&quot;.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -78,8 +169,13 @@ export const AdminShopkeepers: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {shopkeepers.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50/50">
+                {filteredShopkeepers.map((s) => (
+                  <tr
+                    key={s.id}
+                    className={`hover:bg-slate-50/50 transition-colors ${
+                      s.status === 'pending' ? 'bg-amber-50/40' : ''
+                    }`}
+                  >
                     <td className="py-3 px-4">
                       <p className="font-bold text-slate-900">{s.fullName}</p>
                       <span className="font-mono text-slate-400 text-[10px]">{formatNepalMobile(s.mobile)}</span>
@@ -103,7 +199,7 @@ export const AdminShopkeepers: React.FC = () => {
                           ? 'bg-emerald-100 text-emerald-800'
                           : s.status === 'rejected'
                           ? 'bg-red-100 text-red-800'
-                          : 'bg-amber-100 text-amber-900'
+                          : 'bg-amber-200 text-amber-950 font-black animate-pulse'
                       }`}>
                         {s.status}
                       </span>
@@ -115,7 +211,11 @@ export const AdminShopkeepers: React.FC = () => {
                           setReviewAction(s.status === 'approved' ? 'rejected' : 'approved');
                           setReviewModalOpen(true);
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs transition-colors"
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                          s.status === 'pending'
+                            ? 'bg-amber-400 hover:bg-amber-500 text-slate-950 shadow-sm ring-2 ring-amber-300 animate-pulse'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-800'
+                        }`}
                       >
                         {s.status === 'pending' ? 'Review & Approve' : 'Change Status'}
                       </button>

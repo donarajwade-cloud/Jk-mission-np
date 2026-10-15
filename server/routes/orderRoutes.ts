@@ -2,13 +2,13 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db.ts';
 import { authenticateToken, requireRole } from '../auth.ts';
 import { executeOrderCommissions, executeOrderRefund } from '../commissionEngine.ts';
-import { Order, OrderItem } from '../../src/types/index.ts';
+import { Order, OrderItem, CashbackCoupon } from '../../src/types/index.ts';
 
 const router = Router();
 
 // Create Order (Customer)
 router.post('/', authenticateToken, requireRole('customer'), (req: Request, res: Response): void => {
-  const { items, paymentMethod, paymentReference, shippingAddress } = req.body;
+  const { items, paymentMethod, paymentReference, shippingAddress, couponCode } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     res.status(400).json({ success: false, error: 'At least one item is required in the cart' });
@@ -66,6 +66,94 @@ router.post('/', authenticateToken, requireRole('customer'), (req: Request, res:
     const orderNumber = `JKM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
     const now = new Date().toISOString();
 
+    // Handle Coupon Redemption if couponCode was provided
+    let appliedCouponDiscountNpr = 0;
+    let appliedCouponCode: string | undefined = undefined;
+
+    if (couponCode && typeof couponCode === 'string') {
+      const cleanCode = couponCode.trim().toUpperCase();
+      const cpn = (data.coupons || []).find(
+        c => c.code.toUpperCase() === cleanCode && (c.userId === req.user!.userId || c.userId === 'all')
+      );
+      if (cpn && cpn.status === 'available' && cpn.expiresAt > now && totalNpr >= cpn.minOrderAmountNpr) {
+        let disc = Math.round((totalNpr * cpn.discountPercentage) / 100);
+        if (cpn.maxDiscountNpr && disc > cpn.maxDiscountNpr) {
+          disc = cpn.maxDiscountNpr;
+        }
+        disc = Math.min(disc, totalNpr);
+        appliedCouponDiscountNpr = disc;
+        appliedCouponCode = cpn.code;
+
+        cpn.status = 'used';
+        cpn.usedInOrderId = orderId;
+        cpn.usedInOrderNumber = orderNumber;
+        cpn.usedAt = now;
+        cpn.discountAppliedNpr = disc;
+      }
+    }
+
+    const finalPayableNpr = Math.max(0, totalNpr - appliedCouponDiscountNpr);
+
+    // Automatic 3-Level Next Purchase Cashback Coupon Generator
+    let awardedCouponInfo: { code: string; discountPercentage: number; level: 1 | 2 | 3 } | undefined = undefined;
+    const rule = data.cashbackCouponRule;
+    if (rule && rule.enabled !== false) {
+      let level: 1 | 2 | 3 = 1;
+      let discountPercentage = rule.level1Percentage || 10;
+
+      if (totalNpr >= (rule.level3MinSpendNpr || 2500)) {
+        level = 3;
+        discountPercentage = rule.level3Percentage || 20;
+      } else if (totalNpr >= (rule.level2MinSpendNpr || 1000)) {
+        level = 2;
+        discountPercentage = rule.level2Percentage || 15;
+      } else {
+        level = 1;
+        discountPercentage = rule.level1Percentage || 10;
+      }
+
+      const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+      const newCode = `JKMCB-L${level}-${randomSuffix}`;
+      const validityDays = rule.validityDays || 30;
+      const expiresAt = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString();
+
+      const newCoupon: CashbackCoupon = {
+        id: `cpn_${Date.now()}_${randomSuffix}`,
+        code: newCode,
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userMobile: req.user!.mobile,
+        sourceOrderId: orderId,
+        sourceOrderNumber: orderNumber,
+        level,
+        discountPercentage,
+        minOrderAmountNpr: rule.minOrderToApplyNpr || 200,
+        maxDiscountNpr: rule.maxDiscountNpr || 1000,
+        status: 'available',
+        expiresAt,
+        createdAt: now
+      };
+
+      data.coupons = data.coupons || [];
+      data.coupons.push(newCoupon);
+
+      awardedCouponInfo = {
+        code: newCode,
+        discountPercentage,
+        level
+      };
+
+      data.notifications.push({
+        id: `notif_cpn_${Date.now()}`,
+        recipientUserId: req.user!.userId,
+        title: '🎟️ Next Purchase Cashback Coupon Awarded!',
+        message: `Your order #${orderNumber} unlocked a Level ${level} Cashback Coupon (${discountPercentage}% OFF)! Use coupon code "${newCode}" on your next purchase (valid ${validityDays} days).`,
+        type: 'cashback',
+        read: false,
+        createdAt: now
+      });
+    }
+
     const newOrder: Order = {
       id: orderId,
       orderNumber,
@@ -73,7 +161,10 @@ router.post('/', authenticateToken, requireRole('customer'), (req: Request, res:
       customerName: req.user!.name,
       customerMobile: req.user!.mobile,
       items: validatedItems,
-      totalAmountNpr: totalNpr,
+      totalAmountNpr: finalPayableNpr,
+      couponCode: appliedCouponCode,
+      couponDiscountNpr: appliedCouponDiscountNpr,
+      awardedCoupon: awardedCouponInfo,
       paymentMethod: paymentMethod || 'esewa',
       paymentReference: paymentReference || undefined,
       paymentStatus: 'pending',

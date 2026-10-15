@@ -14,7 +14,8 @@ import {
   LogOut,
   ChevronDown,
   ShieldCheck,
-  ShoppingBag as CartIcon
+  ShoppingBag as CartIcon,
+  Ticket
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -228,6 +229,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                               </span>
                             </button>
                             <button
+                              onClick={() => onNavigate('customer-coupons')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium flex items-center justify-between"
+                            >
+                              <span>My Cashback Coupons</span>
+                              <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                                3-Level
+                              </span>
+                            </button>
+                            <button
                               onClick={() => onNavigate('customer-referrals')}
                               className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
                             >
@@ -306,13 +316,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                               onClick={() => onNavigate('admin-customers')}
                               className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
                             >
-                              Customer Network
+                              Customer Traditional Business
                             </button>
                             <button
                               onClick={() => onNavigate('admin-shopkeepers')}
                               className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
                             >
                               Shopkeeper Approvals
+                            </button>
+                            <button
+                              onClick={() => onNavigate('admin-coupons')}
+                              className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
+                            >
+                              Cashback Coupons (3-Level)
                             </button>
                             <button
                               onClick={() => onNavigate('admin-withdrawals')}

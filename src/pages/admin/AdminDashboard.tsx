@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   ArrowRight,
-  DollarSign
+  DollarSign,
+  Ticket
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -68,21 +69,90 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => onNavigate('admin-shopkeepers')}
+            className="relative px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs shadow-xs transition-colors flex items-center space-x-1.5"
+          >
+            <Store className="w-4 h-4" />
+            <span>Shopkeeper Approvals</span>
+            {stats?.pendingShopkeepers > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black animate-pulse">
+                {stats.pendingShopkeepers}
+              </span>
+            )}
+          </button>
           <button
             onClick={() => onNavigate('admin-products')}
-            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs shadow-xs transition-colors"
+            className="relative px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 font-bold text-xs shadow-xs transition-colors flex items-center space-x-1.5"
           >
-            Product Approvals
+            <ShoppingBag className="w-4 h-4" />
+            <span>Product Approvals</span>
+            {stats?.pendingProducts > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black animate-pulse">
+                {stats.pendingProducts}
+              </span>
+            )}
           </button>
           <button
             onClick={() => onNavigate('admin-withdrawals')}
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 font-bold text-xs shadow-xs transition-colors"
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs shadow-xs transition-colors flex items-center space-x-1.5"
           >
-            Process Withdrawals
+            <CreditCard className="w-4 h-4" />
+            <span>Process Withdrawals</span>
           </button>
         </div>
       </div>
+
+      {/* Pending Approvals Action Banner if any are waiting */}
+      {(stats?.pendingShopkeepers > 0 || stats?.pendingProducts > 0) && (
+        <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 p-5 rounded-3xl text-slate-950 shadow-md border border-amber-400 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <AlertTriangle className="w-6 h-6 animate-bounce" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="px-2 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-black uppercase tracking-wider">
+                  Admin Action Required
+                </span>
+                <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+                  New Merchant / Product Submissions
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-950 mt-0.5">
+                {stats?.pendingShopkeepers > 0 && `${stats.pendingShopkeepers} Shopkeeper Application${stats.pendingShopkeepers > 1 ? 's' : ''} Pending`}
+                {stats?.pendingShopkeepers > 0 && stats?.pendingProducts > 0 && ' & '}
+                {stats?.pendingProducts > 0 && `${stats.pendingProducts} Product${stats.pendingProducts > 1 ? 's' : ''} Awaiting Approval`}
+              </h2>
+              <p className="text-xs text-slate-800 font-medium">
+                New shopkeeper stores and catalog items require administrator verification before going live.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+            {stats?.pendingShopkeepers > 0 && (
+              <button
+                onClick={() => onNavigate('admin-shopkeepers')}
+                className="px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-300 font-black text-xs shadow-md flex items-center space-x-1.5 transition-all"
+              >
+                <span>Review Shopkeepers ({stats.pendingShopkeepers})</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {stats?.pendingProducts > 0 && (
+              <button
+                onClick={() => onNavigate('admin-products')}
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs shadow-md flex items-center space-x-1.5 transition-all border border-amber-300"
+              >
+                <span>Approve Products ({stats.pendingProducts})</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Primary Financial Statistics (Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -191,7 +261,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         {/* Platform Directory Counts */}
         <div className="bg-white p-6 rounded-3xl border border-slate-200 space-y-4">
           <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">
-            Network Scale
+            Traditional Business Scale
           </span>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="p-3 rounded-2xl bg-slate-50">
@@ -215,32 +285,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       </div>
 
       {/* Navigation Shortcut Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-bold text-slate-800">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-bold text-slate-800">
         <button
           onClick={() => onNavigate('admin-products')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
             <ShoppingBag className="w-4 h-4" />
           </div>
-          <span>Product Approvals & Commissions</span>
+          <span>Product Approvals</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('admin-coupons')}
+          className="p-3.5 rounded-2xl bg-white border border-amber-300 hover:border-amber-400 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
+        >
+          <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-bold">
+            <Ticket className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="block">Cashback Coupons</span>
+            <span className="text-[10px] text-amber-800 font-bold">3-Level Engine</span>
+          </div>
         </button>
 
         <button
           onClick={() => onNavigate('admin-customers')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
             <Users className="w-4 h-4" />
           </div>
-          <span>Customer & Referral Trees</span>
+          <span>Traditional Business Trees</span>
         </button>
 
         <button
           onClick={() => onNavigate('admin-shopkeepers')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
             <Store className="w-4 h-4" />
           </div>
           <span>Shopkeeper Reviews</span>
@@ -248,12 +331,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
         <button
           onClick={() => onNavigate('admin-ledgers')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
             <TrendingUp className="w-4 h-4" />
           </div>
-          <span>Financial Ledgers & Reports</span>
+          <span>Ledgers & Tax</span>
         </button>
       </div>
     </div>

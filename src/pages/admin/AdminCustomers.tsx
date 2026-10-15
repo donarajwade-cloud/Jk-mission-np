@@ -82,7 +82,7 @@ export const AdminCustomers: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
-            Customer Network
+            Customer Traditional Business
           </span>
           <h1 className="text-3xl font-black text-slate-950 mt-0.5">
             Customer Directory & Referral Trees
@@ -191,7 +191,7 @@ export const AdminCustomers: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
-                  Network Tree Inspector
+                  Traditional Business Tree Inspector
                 </span>
                 <h3 className="font-black text-slate-950 text-base mt-1">
                   Downline of {selectedCustomerTree?.customer?.name} ({formatNepalMobile(selectedCustomerTree?.customer?.mobile)})

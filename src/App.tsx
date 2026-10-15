@@ -30,6 +30,7 @@ import { CustomerWallets } from './pages/customer/CustomerWallets.tsx';
 import { CustomerReferrals } from './pages/customer/CustomerReferrals.tsx';
 import { CustomerOrders } from './pages/customer/CustomerOrders.tsx';
 import { CustomerWithdrawals } from './pages/customer/CustomerWithdrawals.tsx';
+import { CustomerCoupons } from './pages/customer/CustomerCoupons.tsx';
 
 // Shopkeeper pages
 import { ShopkeeperDashboard } from './pages/shopkeeper/ShopkeeperDashboard.tsx';
@@ -48,6 +49,7 @@ import { AdminWithdrawals } from './pages/admin/AdminWithdrawals.tsx';
 import { AdminLedgers } from './pages/admin/AdminLedgers.tsx';
 import { AdminSettings } from './pages/admin/AdminSettings.tsx';
 import { AdminAuditLogs } from './pages/admin/AdminAuditLogs.tsx';
+import { AdminCoupons } from './pages/admin/AdminCoupons.tsx';
 
 function MainApp() {
   const { user, role, isLoading } = useAuth();
@@ -208,6 +210,8 @@ function MainApp() {
         );
       case 'customer-withdrawals':
         return <CustomerWithdrawals />;
+      case 'customer-coupons':
+        return <CustomerCoupons onNavigateShop={() => navigateTo('products')} />;
 
       // Shopkeeper Panel
       case 'shopkeeper-dashboard':
@@ -240,6 +244,8 @@ function MainApp() {
         return <AdminSettings />;
       case 'admin-audit-logs':
         return <AdminAuditLogs />;
+      case 'admin-coupons':
+        return <AdminCoupons />;
 
       default:
         return (

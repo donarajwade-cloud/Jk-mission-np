@@ -136,15 +136,30 @@ router.post('/submit', authenticateToken, requireRole('shopkeeper'), (req: Reque
 
   db.transaction((data) => {
     data.products.push(newProduct);
-    data.notifications.push({
-      id: `notif_${Date.now()}`,
-      recipientUserId: 'user_admin_1',
-      title: 'New Product Pending Approval',
-      message: `${shop.name} submitted a new product: "${name}" at NPR ${proposedSellingPriceNpr}`,
-      type: 'product',
-      read: false,
-      createdAt: now
-    });
+    const admins = data.users.filter(u => u.role === 'admin');
+    if (admins.length === 0) {
+      data.notifications.push({
+        id: `notif_${Date.now()}`,
+        recipientUserId: 'user_admin_1',
+        title: '📦 New Product Pending Approval',
+        message: `${shop.name} submitted a new product: "${name}" at proposed price NPR ${proposedSellingPriceNpr}. Configure commissions to approve.`,
+        type: 'product',
+        read: false,
+        createdAt: now
+      });
+    } else {
+      for (const admin of admins) {
+        data.notifications.push({
+          id: `notif_${Date.now()}_${admin.id}`,
+          recipientUserId: admin.id,
+          title: '📦 New Product Pending Approval',
+          message: `${shop.name} submitted a new product: "${name}" at proposed price NPR ${proposedSellingPriceNpr}. Configure commissions to approve.`,
+          type: 'product',
+          read: false,
+          createdAt: now
+        });
+      }
+    }
     data.auditLogs.push({
       id: `audit_prod_${productId}`,
       action: 'PRODUCT_SUBMITTED',

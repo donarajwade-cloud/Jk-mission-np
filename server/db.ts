@@ -16,7 +16,9 @@ import {
   WithdrawalRequest,
   AppNotification,
   AuditLog,
-  SystemSettings
+  SystemSettings,
+  CashbackCouponRule,
+  CashbackCoupon
 } from '../src/types/index.ts';
 
 interface DatabaseSchema {
@@ -27,6 +29,8 @@ interface DatabaseSchema {
   shops: Shop[];
   products: Product[];
   orders: Order[];
+  cashbackCouponRule: CashbackCouponRule;
+  coupons: CashbackCoupon[];
   cashbackLedger: CashbackLedgerEntry[];
   referralLedger: ReferralCommissionLedgerEntry[];
   shopkeeperLedger: ShopkeeperCommissionLedgerEntry[];
@@ -318,6 +322,22 @@ function initDefaultSeed(): DatabaseSchema {
     shops: [shop],
     products,
     orders: [],
+    cashbackCouponRule: {
+      id: 'rule_cb_default',
+      enabled: true,
+      title: '3-Level Purchase Cashback Coupon Engine',
+      level1Percentage: 10,
+      level2Percentage: 15,
+      level3Percentage: 20,
+      level1MinSpendNpr: 0,
+      level2MinSpendNpr: 1000,
+      level3MinSpendNpr: 2500,
+      validityDays: 30,
+      minOrderToApplyNpr: 200,
+      maxDiscountNpr: 1000,
+      updatedAt: now
+    },
+    coupons: [],
     cashbackLedger: [],
     referralLedger: [],
     shopkeeperLedger: [],
@@ -478,6 +498,28 @@ export function loadDatabase(): DatabaseSchema {
           dbState.passwords['user_admin_1'] = bcrypt.hashSync('Admin123@', 10);
           migrated = true;
         }
+      }
+      if (!dbState.cashbackCouponRule) {
+        dbState.cashbackCouponRule = {
+          id: 'rule_cb_default',
+          enabled: true,
+          title: '3-Level Purchase Cashback Coupon Engine',
+          level1Percentage: 10,
+          level2Percentage: 15,
+          level3Percentage: 20,
+          level1MinSpendNpr: 0,
+          level2MinSpendNpr: 1000,
+          level3MinSpendNpr: 2500,
+          validityDays: 30,
+          minOrderToApplyNpr: 200,
+          maxDiscountNpr: 1000,
+          updatedAt: new Date().toISOString()
+        };
+        migrated = true;
+      }
+      if (!dbState.coupons) {
+        dbState.coupons = [];
+        migrated = true;
       }
       if (migrated) {
         persistDb();

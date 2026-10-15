@@ -47,6 +47,25 @@
       "sponsorReferralId": "+9779833333333",
       "status": "active",
       "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "user_cust_4",
+      "name": "Deepak Khatri",
+      "mobile": "+9779855555555",
+      "role": "customer",
+      "referralId": "+9779855555555",
+      "sponsorReferralId": "+9779844444444",
+      "status": "active",
+      "createdAt": "2026-10-14T03:30:00.000Z"
+    },
+    {
+      "id": "user_shop_1791947989617",
+      "name": "Ram Bahadur Shrestha",
+      "mobile": "+9779877777777",
+      "role": "shopkeeper",
+      "referralId": "+9779877777777",
+      "status": "active",
+      "createdAt": "2026-10-14T03:19:49.617Z"
     }
   ],
   "passwords": {
@@ -54,7 +73,9 @@
     "user_shop_1": "$2b$10$zusmaOKxk9Kxw55pzJAy8uB24BJUX.mFy4Gjg692PaxSE9Znokk2i",
     "user_cust_1": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W",
     "user_cust_2": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W",
-    "user_cust_3": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W"
+    "user_cust_3": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W",
+    "user_cust_4": "$2b$10$YNmsWtFd1kA/5xxVDp5ChuxO/F0ORmjyW5ntNMwaj6s3DcOPruD0W",
+    "user_shop_1791947989617": "$2b$10$t7zBo9DguUjsLvQPmwk4v.0Zh9Xa7pUelcOSWgfISSV1LYui6zs/."
   },
   "customers": [
     {
@@ -88,6 +109,17 @@
       "city": "Lalitpur",
       "district": "Lalitpur",
       "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "cust_prof_4",
+      "userId": "user_cust_4",
+      "fullName": "Deepak Khatri",
+      "mobile": "+9779855555555",
+      "referralId": "+9779855555555",
+      "sponsorReferralId": "+9779844444444",
+      "city": "Bhaktapur",
+      "district": "Bhaktapur",
+      "createdAt": "2026-10-14T03:30:00.000Z"
     }
   ],
   "shopkeepers": [
@@ -103,6 +135,19 @@
       "panOrVatNumber": "601234987",
       "status": "approved",
       "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "sk_prof_user_shop_1791947989617",
+      "userId": "user_shop_1791947989617",
+      "fullName": "Ram Bahadur Shrestha",
+      "mobile": "+9779877777777",
+      "shopName": "Himalayan Organic Mart",
+      "shopAddress": "Baneshwor, Ward 10",
+      "district": "Kathmandu",
+      "municipality": "Kathmandu Metropolitan",
+      "panOrVatNumber": "998877665",
+      "status": "approved",
+      "createdAt": "2026-10-14T03:19:49.617Z"
     }
   ],
   "shops": [
@@ -120,6 +165,21 @@
       "featured": true,
       "isOpen": true,
       "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": "shop_1791947989723",
+      "shopkeeperId": "sk_prof_user_shop_1791947989617",
+      "shopkeeperUserId": "user_shop_1791947989617",
+      "name": "Himalayan Organic Mart",
+      "address": "Baneshwor, Ward 10",
+      "district": "Kathmandu",
+      "municipality": "Kathmandu Metropolitan",
+      "phone": "+9779877777777",
+      "description": "Registered merchant located at Baneshwor, Ward 10, Kathmandu Metropolitan, Kathmandu",
+      "rating": 5,
+      "featured": false,
+      "isOpen": true,
+      "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80"
     }
   ],
   "products": [
@@ -134,7 +194,7 @@
       "costPriceNpr": 320,
       "proposedSellingPriceNpr": 550,
       "finalSellingPriceNpr": 550,
-      "stockQuantity": 45,
+      "stockQuantity": 44,
       "lowStockThreshold": 10,
       "sku": "ILAM-TEA-250",
       "imageUrl": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80",
@@ -252,55 +312,212 @@
       "status": "pending_approval",
       "createdAt": "2026-10-14T00:59:46.289Z",
       "updatedAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "prod_1791947998941",
+      "shopId": "shop_1791947989723",
+      "shopName": "Himalayan Organic Mart",
+      "shopkeeperUserId": "user_shop_1791947989617",
+      "name": "Organic Nepali Cardamom (100g)",
+      "description": "Freshly harvested cardamom from Taplejung.",
+      "category": "Spices & Herbs",
+      "costPriceNpr": 300,
+      "proposedSellingPriceNpr": 550,
+      "finalSellingPriceNpr": 550,
+      "stockQuantity": 25,
+      "lowStockThreshold": 5,
+      "sku": "SKU-998941",
+      "imageUrl": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=600&q=80",
+      "specifications": {},
+      "status": "pending_approval",
+      "createdAt": "2026-10-14T03:19:58.941Z",
+      "updatedAt": "2026-10-14T03:19:58.941Z"
     }
   ],
-  "orders": [],
-  "cashbackLedger": [],
-  "referralLedger": [],
-  "shopkeeperLedger": [],
+  "orders": [
+    {
+      "id": "ord_1792033529296",
+      "orderNumber": "JKM-2026-546032",
+      "customerId": "user_cust_4",
+      "customerName": "Deepak Khatri",
+      "customerMobile": "+9779855555555",
+      "items": [
+        {
+          "productId": "prod_1",
+          "productName": "Ilam Orthodox Green Tea (250g)",
+          "shopId": "shop_1",
+          "shopName": "Himalayan Organic & Retail Hub",
+          "shopkeeperUserId": "user_shop_1",
+          "quantity": 1,
+          "unitPriceNpr": 550,
+          "unitCostNpr": 320,
+          "totalNpr": 550,
+          "commissionSnapshot": {
+            "cashbackNpr": 35,
+            "referralPoolNpr": 60,
+            "level1Npr": 30,
+            "level2Npr": 18,
+            "level3Npr": 12,
+            "shopkeeperCommissionNpr": 40,
+            "companyShareNpr": 75,
+            "expensesNpr": 20
+          }
+        }
+      ],
+      "totalAmountNpr": 550,
+      "paymentMethod": "esewa",
+      "paymentReference": "ESEWA-TEST-999",
+      "paymentStatus": "verified",
+      "orderStatus": "completed",
+      "shippingAddress": {
+        "fullName": "Deepak Khatri",
+        "mobile": "+9779855555555",
+        "street": "Suryabinayak",
+        "city": "Bhaktapur"
+      },
+      "commissionProcessed": true,
+      "createdAt": "2026-10-15T03:05:29.296Z",
+      "completedAt": "2026-10-15T03:05:40.345Z"
+    }
+  ],
+  "cashbackLedger": [
+    {
+      "id": "cb_ord_1792033529296_prod_1_1792033540345",
+      "orderId": "ord_1792033529296",
+      "orderNumber": "JKM-2026-546032",
+      "customerId": "user_cust_4",
+      "customerMobile": "+9779855555555",
+      "productId": "prod_1",
+      "productName": "Ilam Orthodox Green Tea (250g)",
+      "amountNpr": 35,
+      "type": "credit",
+      "status": "credited",
+      "description": "Cashback for purchasing 1x Ilam Orthodox Green Tea (250g)",
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    }
+  ],
+  "referralLedger": [
+    {
+      "id": "ref_l1_ord_1792033529296_prod_1_1792033540345",
+      "orderId": "ord_1792033529296",
+      "orderNumber": "JKM-2026-546032",
+      "buyerCustomerId": "user_cust_4",
+      "beneficiaryCustomerId": "user_cust_3",
+      "beneficiaryMobile": "+9779844444444",
+      "referralLevel": 1,
+      "amountNpr": 30,
+      "type": "credit",
+      "status": "credited",
+      "description": "Level 1 referral commission from direct referral purchase of 1x Ilam Orthodox Green Tea (250g)",
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    },
+    {
+      "id": "ref_l2_ord_1792033529296_prod_1_1792033540345",
+      "orderId": "ord_1792033529296",
+      "orderNumber": "JKM-2026-546032",
+      "buyerCustomerId": "user_cust_4",
+      "beneficiaryCustomerId": "user_cust_2",
+      "beneficiaryMobile": "+9779833333333",
+      "referralLevel": 2,
+      "amountNpr": 18,
+      "type": "credit",
+      "status": "credited",
+      "description": "Level 2 referral commission from indirect referral purchase of 1x Ilam Orthodox Green Tea (250g)",
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    },
+    {
+      "id": "ref_l3_ord_1792033529296_prod_1_1792033540345",
+      "orderId": "ord_1792033529296",
+      "orderNumber": "JKM-2026-546032",
+      "buyerCustomerId": "user_cust_4",
+      "beneficiaryCustomerId": "user_cust_1",
+      "beneficiaryMobile": "+9779822222222",
+      "referralLevel": 3,
+      "amountNpr": 12,
+      "type": "credit",
+      "status": "credited",
+      "description": "Level 3 referral commission from team purchase of 1x Ilam Orthodox Green Tea (250g)",
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    }
+  ],
+  "shopkeeperLedger": [
+    {
+      "id": "sk_comm_ord_1792033529296_prod_1_1792033540345",
+      "orderId": "ord_1792033529296",
+      "orderNumber": "JKM-2026-546032",
+      "shopkeeperUserId": "user_shop_1",
+      "shopName": "Himalayan Organic & Retail Hub",
+      "productId": "prod_1",
+      "productName": "Ilam Orthodox Green Tea (250g)",
+      "amountNpr": 40,
+      "type": "credit",
+      "status": "credited",
+      "description": "Shopkeeper sales commission for 1x Ilam Orthodox Green Tea (250g)",
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    }
+  ],
   "customerWallets": {
     "user_cust_1": {
       "userId": "user_cust_1",
       "cashbackAvailableNpr": 140,
       "cashbackPendingNpr": 0,
       "cashbackTotalEarnedNpr": 140,
-      "incomeAvailableNpr": 285,
+      "incomeAvailableNpr": 297,
       "incomePendingNpr": 0,
-      "incomeTotalEarnedNpr": 285,
+      "incomeTotalEarnedNpr": 297,
       "incomeTotalWithdrawnNpr": 0,
-      "updatedAt": "2026-10-14T00:59:46.289Z"
+      "updatedAt": "2026-10-15T03:05:40.345Z"
     },
     "user_cust_2": {
       "userId": "user_cust_2",
       "cashbackAvailableNpr": 50,
       "cashbackPendingNpr": 0,
       "cashbackTotalEarnedNpr": 50,
-      "incomeAvailableNpr": 90,
+      "incomeAvailableNpr": 108,
       "incomePendingNpr": 0,
-      "incomeTotalEarnedNpr": 90,
+      "incomeTotalEarnedNpr": 108,
       "incomeTotalWithdrawnNpr": 0,
-      "updatedAt": "2026-10-14T00:59:46.289Z"
+      "updatedAt": "2026-10-15T03:05:40.345Z"
     },
     "user_cust_3": {
       "userId": "user_cust_3",
       "cashbackAvailableNpr": 0,
       "cashbackPendingNpr": 0,
       "cashbackTotalEarnedNpr": 0,
+      "incomeAvailableNpr": 30,
+      "incomePendingNpr": 0,
+      "incomeTotalEarnedNpr": 30,
+      "incomeTotalWithdrawnNpr": 0,
+      "updatedAt": "2026-10-15T03:05:40.345Z"
+    },
+    "user_cust_4": {
+      "userId": "user_cust_4",
+      "cashbackAvailableNpr": 35,
+      "cashbackPendingNpr": 0,
+      "cashbackTotalEarnedNpr": 35,
       "incomeAvailableNpr": 0,
       "incomePendingNpr": 0,
       "incomeTotalEarnedNpr": 0,
       "incomeTotalWithdrawnNpr": 0,
-      "updatedAt": "2026-10-14T00:59:46.289Z"
+      "updatedAt": "2026-10-15T03:05:40.345Z"
     }
   },
   "shopkeeperWallets": {
     "user_shop_1": {
       "userId": "user_shop_1",
-      "availableCommissionNpr": 420,
+      "availableCommissionNpr": 460,
       "pendingCommissionNpr": 0,
-      "totalEarnedNpr": 420,
+      "totalEarnedNpr": 460,
       "totalWithdrawnNpr": 0,
-      "updatedAt": "2026-10-14T00:59:46.289Z"
+      "updatedAt": "2026-10-15T03:05:40.345Z"
+    },
+    "user_shop_1791947989617": {
+      "userId": "user_shop_1791947989617",
+      "availableCommissionNpr": 0,
+      "pendingCommissionNpr": 0,
+      "totalEarnedNpr": 0,
+      "totalWithdrawnNpr": 0,
+      "updatedAt": "2026-10-14T03:19:49.617Z"
     }
   },
   "withdrawals": [
@@ -338,6 +555,96 @@
       "type": "system",
       "read": false,
       "createdAt": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "notif_skreg_1791947989725_user_admin_1",
+      "recipientUserId": "user_admin_1",
+      "title": "🚨 New Shopkeeper Application Awaiting Approval",
+      "message": "Ram Bahadur Shrestha has applied with shop \"Himalayan Organic Mart\" in Kathmandu (+9779877777777). Requires admin approval.",
+      "type": "system",
+      "read": false,
+      "createdAt": "2026-10-14T03:19:49.617Z"
+    },
+    {
+      "id": "notif_1791947998941_user_admin_1",
+      "recipientUserId": "user_admin_1",
+      "title": "📦 New Product Pending Approval",
+      "message": "Himalayan Organic Mart submitted a new product: \"Organic Nepali Cardamom (100g)\" at proposed price NPR 550. Configure commissions to approve.",
+      "type": "product",
+      "read": false,
+      "createdAt": "2026-10-14T03:19:58.941Z"
+    },
+    {
+      "id": "notif_skrev_1791948057713",
+      "recipientUserId": "user_shop_1791947989617",
+      "title": "Shopkeeper Application Approved!",
+      "message": "Your shop \"Himalayan Organic Mart\" is now officially approved. You can submit products for listing!",
+      "type": "system",
+      "read": false,
+      "createdAt": "2026-10-14T03:20:57.713Z"
+    },
+    {
+      "id": "notif_ord_1792033529296",
+      "recipientUserId": "user_cust_4",
+      "title": "Order Placed Successfully",
+      "message": "Your order #JKM-2026-546032 for NPR 550 has been received.",
+      "type": "order",
+      "read": false,
+      "createdAt": "2026-10-15T03:05:29.296Z"
+    },
+    {
+      "id": "notif_ord_adm_1792033529296",
+      "recipientUserId": "user_admin_1",
+      "title": "New Customer Order Placed",
+      "message": "Order #JKM-2026-546032 (NPR 550) placed by Deepak Khatri. Awaiting verification.",
+      "type": "order",
+      "read": false,
+      "createdAt": "2026-10-15T03:05:29.296Z"
+    },
+    {
+      "id": "notif_cb_1792033540345_xo0hbt",
+      "recipientUserId": "user_cust_4",
+      "title": "Cashback Credited!",
+      "message": "NPR 35 cashback credited to your Cashback Wallet for order #JKM-2026-546032.",
+      "type": "cashback",
+      "read": false,
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    },
+    {
+      "id": "notif_l1_1792033540345_qxak3s",
+      "recipientUserId": "user_cust_3",
+      "title": "Referral Income Credited!",
+      "message": "NPR 30 Level 1 commission received from direct referral purchase (Order #JKM-2026-546032).",
+      "type": "commission",
+      "read": false,
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    },
+    {
+      "id": "notif_l2_1792033540345_tzu8so",
+      "recipientUserId": "user_cust_2",
+      "title": "Level 2 Referral Income Credited!",
+      "message": "NPR 18 Level 2 commission received (Order #JKM-2026-546032).",
+      "type": "commission",
+      "read": false,
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    },
+    {
+      "id": "notif_l3_1792033540345_8buot9",
+      "recipientUserId": "user_cust_1",
+      "title": "Level 3 Referral Income Credited!",
+      "message": "NPR 12 Level 3 commission received (Order #JKM-2026-546032).",
+      "type": "commission",
+      "read": false,
+      "createdAt": "2026-10-15T03:05:40.345Z"
+    },
+    {
+      "id": "notif_sk_1792033540345_krajwa",
+      "recipientUserId": "user_shop_1",
+      "title": "Shopkeeper Commission Credited",
+      "message": "NPR 40 commission credited for product sale (Ilam Orthodox Green Tea (250g), Order #JKM-2026-546032).",
+      "type": "commission",
+      "read": false,
+      "createdAt": "2026-10-15T03:05:40.345Z"
     }
   ],
   "auditLogs": [
@@ -350,6 +657,56 @@
       "entityType": "system",
       "entityId": "global",
       "timestamp": "2026-10-14T00:59:46.289Z"
+    },
+    {
+      "id": "audit_reg_user_shop_1791947989617",
+      "action": "SHOPKEEPER_APPLIED",
+      "actorUserId": "user_shop_1791947989617",
+      "actorRole": "shopkeeper",
+      "details": "New shopkeeper applied: Himalayan Organic Mart by Ram Bahadur Shrestha (+9779877777777)",
+      "entityType": "shopkeeper",
+      "entityId": "user_shop_1791947989617",
+      "timestamp": "2026-10-14T03:19:49.617Z"
+    },
+    {
+      "id": "audit_prod_prod_1791947998941",
+      "action": "PRODUCT_SUBMITTED",
+      "actorUserId": "user_shop_1791947989617",
+      "actorRole": "shopkeeper",
+      "details": "Product \"Organic Nepali Cardamom (100g)\" submitted by Himalayan Organic Mart",
+      "entityType": "product",
+      "entityId": "prod_1791947998941",
+      "timestamp": "2026-10-14T03:19:58.941Z"
+    },
+    {
+      "id": "audit_sk_sk_prof_user_shop_1791947989617",
+      "action": "SHOPKEEPER_APPROVED",
+      "actorUserId": "user_admin_1",
+      "actorRole": "admin",
+      "details": "Shopkeeper Ram Bahadur Shrestha (Himalayan Organic Mart) marked approved",
+      "entityType": "shopkeeper",
+      "entityId": "sk_prof_user_shop_1791947989617",
+      "timestamp": "2026-10-14T03:20:57.713Z"
+    },
+    {
+      "id": "audit_ord_ord_1792033529296",
+      "action": "ORDER_PLACED",
+      "actorUserId": "user_cust_4",
+      "actorRole": "customer",
+      "details": "Order #JKM-2026-546032 placed for NPR 550 via esewa",
+      "entityType": "order",
+      "entityId": "ord_1792033529296",
+      "timestamp": "2026-10-15T03:05:29.296Z"
+    },
+    {
+      "id": "audit_comm_ord_1792033529296",
+      "action": "ORDER_COMMISSIONS_PROCESSED",
+      "actorUserId": "system",
+      "actorRole": "system",
+      "details": "Commissions and cashbacks processed for completed order #JKM-2026-546032",
+      "entityType": "order",
+      "entityId": "ord_1792033529296",
+      "timestamp": "2026-10-15T03:05:40.345Z"
     }
   ],
   "systemSettings": {

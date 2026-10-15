@@ -9,7 +9,9 @@ import {
   AuditLog,
   SystemSettings,
   Shop,
-  ProductCommissionSettings
+  ProductCommissionSettings,
+  CashbackCoupon,
+  CashbackCouponRule
 } from '../types/index.ts';
 
 import { handleLocalFallbackRequest } from './localStore.ts';
@@ -191,6 +193,7 @@ export const api = {
     paymentMethod: 'esewa' | 'khalti' | 'bank_transfer' | 'cash_on_delivery';
     paymentReference?: string;
     shippingAddress: { fullName: string; mobile: string; street: string; city: string; district: string };
+    couponCode?: string;
   }) =>
     request<{ success: boolean; order: Order }>('/api/orders', {
       method: 'POST',
@@ -369,5 +372,63 @@ export const api = {
     request<{ success: boolean }>(`/api/notifications/${id}/read`, { method: 'PUT' }),
 
   markAllNotificationsRead: () =>
-    request<{ success: boolean }>('/api/notifications/mark-all-read', { method: 'PUT' })
+    request<{ success: boolean }>('/api/notifications/mark-all-read', { method: 'PUT' }),
+
+  // 3-Level Cashback Coupons
+  getMyCoupons: () =>
+    request<{ success: boolean; coupons: CashbackCoupon[]; rule: CashbackCouponRule }>('/api/coupons/my-coupons'),
+
+  validateCoupon: (code: string, cartTotalNpr: number) =>
+    request<{
+      success: boolean;
+      valid: boolean;
+      discountNpr: number;
+      finalTotalNpr: number;
+      coupon: {
+        code: string;
+        discountPercentage: number;
+        level: 1 | 2 | 3;
+        expiresAt: string;
+      };
+      error?: string;
+    }>('/api/coupons/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code, cartTotalNpr })
+    }),
+
+  getAdminCouponRules: () =>
+    request<{ success: boolean; rule: CashbackCouponRule }>('/api/coupons/admin/rules'),
+
+  updateAdminCouponRules: (rules: Partial<CashbackCouponRule>) =>
+    request<{ success: boolean; message: string; rule: CashbackCouponRule }>('/api/coupons/admin/rules', {
+      method: 'PUT',
+      body: JSON.stringify(rules)
+    }),
+
+  getAdminCouponsList: () =>
+    request<{
+      success: boolean;
+      coupons: CashbackCoupon[];
+      rule: CashbackCouponRule;
+      stats: {
+        totalIssued: number;
+        availableCount: number;
+        usedCount: number;
+        totalSavedNpr: number;
+      };
+    }>('/api/coupons/admin/list'),
+
+  createCustomCoupon: (payload: {
+    targetUserId: string;
+    discountPercentage: number;
+    level: 1 | 2 | 3;
+    minOrderAmountNpr?: number;
+    maxDiscountNpr?: number;
+    validityDays?: number;
+    customCode?: string;
+  }) =>
+    request<{ success: boolean; message: string; coupon: CashbackCoupon }>('/api/coupons/admin/create-custom', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
 };

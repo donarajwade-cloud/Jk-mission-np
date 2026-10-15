@@ -15,7 +15,7 @@ export const ReferralProgramPage: React.FC<{ onNavigate: (view: string) => void 
           3-Level Referral Commission Engine
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
-          Share products you love. Earn sustainable commissions from verified sales in your network under published product commission settings.
+          Share products you love. Earn sustainable commissions from verified sales in your traditional business under published product commission settings.
         </p>
       </div>
 
@@ -120,7 +120,7 @@ export const ReferralProgramPage: React.FC<{ onNavigate: (view: string) => void 
           >
             <span>
               {role === 'customer'
-                ? 'View Your 3-Level Referral Team & Network'
+                ? 'View Your 3-Level Referral Team & Traditional Business'
                 : role === 'admin'
                 ? 'Inspect Customer Referral Trees'
                 : 'Go to Shopkeeper Dashboard'}

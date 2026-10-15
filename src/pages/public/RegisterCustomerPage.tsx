@@ -15,7 +15,14 @@ export const RegisterCustomerPage: React.FC<RegisterCustomerPageProps> = ({
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
-  const [sponsorReferralMobile, setSponsorReferralMobile] = useState('');
+  const [sponsorReferralMobile, setSponsorReferralMobile] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('ref') || params.get('sponsor') || '';
+    } catch {
+      return '';
+    }
+  });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

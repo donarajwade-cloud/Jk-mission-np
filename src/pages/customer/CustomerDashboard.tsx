@@ -12,7 +12,9 @@ import {
   ArrowRight,
   TrendingUp,
   ShieldCheck,
-  Clock
+  Clock,
+  Ticket,
+  Sparkles
 } from 'lucide-react';
 import { WalletCardUI } from '../../components/common/WalletCardUI.tsx';
 
@@ -29,6 +31,8 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   const [copied, setCopied] = useState(false);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [walletData, setWalletData] = useState<any>(null);
+  const [availableCouponsCount, setAvailableCouponsCount] = useState<number>(0);
+  const [couponRule, setCouponRule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -40,12 +44,18 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
     setLoading(true);
     setLoadError(null);
     try {
-      const [ordRes, walRes] = await Promise.all([
+      const [ordRes, walRes, cpnRes] = await Promise.all([
         api.getMyOrders(),
-        api.getCustomerWallet()
+        api.getCustomerWallet(),
+        api.getMyCoupons().catch(() => ({ success: false, coupons: [], rule: null }))
       ]);
       if (ordRes.success) setRecentOrders(ordRes.orders.slice(0, 3));
       if (walRes.success) setWalletData(walRes);
+      if (cpnRes && cpnRes.success) {
+        const available = (cpnRes.coupons || []).filter((c: any) => c.status === 'available');
+        setAvailableCouponsCount(available.length);
+        if (cpnRes.rule) setCouponRule(cpnRes.rule);
+      }
     } catch (err: any) {
       console.warn('Notice: Could not load customer dashboard data:', err?.message || err);
       setLoadError(err?.message || 'Unable to load dashboard data');
@@ -177,23 +187,71 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
         </div>
       </div>
 
+      {/* 3-Level Cashback Coupons Showcase Card */}
+      <div className="bg-linear-to-r from-amber-500 via-amber-400 to-amber-300 rounded-3xl p-6 sm:p-7 text-slate-950 shadow-md border border-amber-300 flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="space-y-1.5 max-w-xl">
+          <div className="flex items-center space-x-2">
+            <span className="px-2 py-0.5 rounded-full bg-slate-950 text-amber-400 font-black text-[10px] uppercase tracking-wider flex items-center space-x-1">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>Automated 3-Level Rewards</span>
+            </span>
+            <span className="text-xs font-black text-amber-950">
+              {availableCouponsCount > 0
+                ? `${availableCouponsCount} Active Coupon(s) Available`
+                : 'Earn On Every Order'}
+            </span>
+          </div>
+
+          <h3 className="text-xl font-black text-slate-950">
+            Next-Purchase Cashback Coupons
+          </h3>
+          <p className="text-xs font-medium text-slate-900/90 leading-relaxed">
+            Every product purchase automatically generates a 3-Level Cashback Coupon ({couponRule?.level1Percentage || 10}% - {couponRule?.level3Percentage || 20}% OFF) for your next order, configured directly by administration.
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-3 shrink-0">
+          <button
+            onClick={() => onNavigate('customer-coupons')}
+            className="px-5 py-3 rounded-2xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs flex items-center space-x-2 shadow-lg transition-transform hover:-translate-y-0.5"
+          >
+            <Ticket className="w-4 h-4 text-amber-400" />
+            <span>My Coupons ({availableCouponsCount})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
       {/* Quick Nav Shortcut Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-bold text-slate-800">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-bold text-slate-800">
         <button
           onClick={() => onNavigate('products')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
             <ShoppingBag className="w-4 h-4" />
           </div>
           <span>Shop Products</span>
         </button>
 
         <button
-          onClick={() => onNavigate('customer-orders')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          onClick={() => onNavigate('customer-coupons')}
+          className="p-3.5 rounded-2xl bg-white border border-amber-300 hover:border-amber-400 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-bold">
+            <Ticket className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="block">My Coupons</span>
+            <span className="text-[10px] text-amber-800 font-black">{availableCouponsCount} available</span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => onNavigate('customer-orders')}
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
+        >
+          <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
             <Clock className="w-4 h-4" />
           </div>
           <span>My Orders ({recentOrders.length})</span>
@@ -201,22 +259,22 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 
         <button
           onClick={() => onNavigate('customer-referrals')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
             <Users className="w-4 h-4" />
           </div>
-          <span>Referral Network</span>
+          <span>Traditional Team</span>
         </button>
 
         <button
           onClick={() => onNavigate('customer-wallets')}
-          className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-3 text-left"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all flex items-center space-x-2.5 text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
             <CreditCard className="w-4 h-4" />
           </div>
-          <span>Full Ledgers</span>
+          <span>Ledgers</span>
         </button>
       </div>
 

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db.ts';
-import { authenticateToken, requireRole } from '../auth.ts';
+import { authenticateToken, requireRole, cleanMobileDigits, matchesMobileOrReferral } from '../auth.ts';
 import { WithdrawalRequest } from '../../src/types/index.ts';
 
 const router = Router();
@@ -36,18 +36,35 @@ router.get('/customer', authenticateToken, (req: Request, res: Response): void =
 // Customer: Get 3-Level Referral Tree
 router.get('/customer/referral-tree', authenticateToken, (req: Request, res: Response): void => {
   const targetUserId = (req.query.userId as string) || req.user!.userId;
-  const user = db.data.users.find(u => u.id === targetUserId);
+  const user = db.data.users.find(u => u.id === targetUserId || matchesMobileOrReferral(u.mobile, u.referralId, targetUserId));
   if (!user) {
     res.status(404).json({ success: false, error: 'User not found' });
     return;
   }
 
-  // Find Level 1 downline (direct referrals where sponsorReferralId === user.mobile)
-  const l1Users = db.data.users.filter(u => u.sponsorReferralId === user.mobile);
-  const l1Mobiles = l1Users.map(u => u.mobile);
-  const l2Users = db.data.users.filter(u => u.sponsorReferralId && l1Mobiles.includes(u.sponsorReferralId));
-  const l2Mobiles = l2Users.map(u => u.mobile);
-  const l3Users = db.data.users.filter(u => u.sponsorReferralId && l2Mobiles.includes(u.sponsorReferralId));
+  // Find Level 1 downline (direct referrals whose sponsorReferralId matches user's mobile/referralId)
+  const l1Users = db.data.users.filter(u =>
+    u.id !== user.id &&
+    u.sponsorReferralId &&
+    matchesMobileOrReferral(user.mobile, user.referralId, u.sponsorReferralId)
+  );
+
+  // Find Level 2 downline (whose sponsorReferralId matches any L1's mobile/referralId)
+  const l2Users = db.data.users.filter(u =>
+    u.id !== user.id &&
+    !l1Users.some(l1 => l1.id === u.id) &&
+    u.sponsorReferralId &&
+    l1Users.some(l1 => matchesMobileOrReferral(l1.mobile, l1.referralId, u.sponsorReferralId))
+  );
+
+  // Find Level 3 downline (whose sponsorReferralId matches any L2's mobile/referralId)
+  const l3Users = db.data.users.filter(u =>
+    u.id !== user.id &&
+    !l1Users.some(l1 => l1.id === u.id) &&
+    !l2Users.some(l2 => l2.id === u.id) &&
+    u.sponsorReferralId &&
+    l2Users.some(l2 => matchesMobileOrReferral(l2.mobile, l2.referralId, u.sponsorReferralId))
+  );
 
   const calcLevelStats = (users: typeof l1Users, level: 1 | 2 | 3) => {
     const userIds = users.map(u => u.id);
