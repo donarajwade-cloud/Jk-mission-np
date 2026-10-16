@@ -304,7 +304,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
       </section>
 
       {/* Main Interactive Shopping Catalog */}
-      <section id="shopping-catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <section id="shopping-catalog" className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <div className="inline-flex items-center space-x-1.5 text-xs font-black text-amber-700 uppercase tracking-wider mb-1">
@@ -382,14 +382,14 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {filteredAndSortedProducts.map((p) => {
               const isAdded = addedItemIds[p.id];
               return (
                 <div
                   key={p.id}
                   onClick={() => onSelectProduct(p.id)}
-                  className="group bg-white rounded-3xl border border-slate-200/90 hover:border-amber-400 p-4 transition-all hover:shadow-xl flex flex-col justify-between cursor-pointer relative"
+                  className="group bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 hover:border-amber-400 p-3 sm:p-4 transition-all hover:shadow-xl flex flex-col justify-between cursor-pointer relative"
                 >
                   <div>
                     {/* Product Image */}

@@ -104,7 +104,7 @@ export const PanelNav: React.FC<PanelNavProps> = ({ currentView, onNavigate }) =
 
   return (
     <div className="bg-slate-900 border-b border-slate-800 text-white shadow-md sticky top-16 z-30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8">
         {/* Top Info Bar */}
         <div className="py-2.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 text-xs">
           <div className="flex items-center space-x-2.5">

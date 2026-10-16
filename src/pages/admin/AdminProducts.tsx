@@ -265,54 +265,70 @@ export const AdminProducts: React.FC = () => {
     if (!editingProduct) return;
 
     if (!editName.trim()) {
-      setEditError('Product name is required');
+      setEditError('Product title is required');
       return;
     }
     const cost = Number(editCostPriceNpr);
     const selling = Number(editSellingPriceNpr);
 
     if (isNaN(cost) || cost <= 0 || isNaN(selling) || selling <= 0) {
-      setEditError('Cost price and selling price must be positive numbers');
+      setEditError('Merchant cost price and selling price must be positive numbers');
       return;
     }
     if (selling < cost) {
       setEditError(`Selling price (NPR ${selling}) cannot be less than cost price (NPR ${cost})`);
       return;
     }
-    if (!editImageUrl.trim()) {
-      setEditError('Please upload or provide at least one product photo');
+
+    const primaryImg = editImageUrl.trim() || (editGalleryImages.length > 0 ? editGalleryImages[0] : '');
+    if (!primaryImg) {
+      setEditError('Please upload at least one photo from your device gallery or enter an image URL');
       return;
     }
 
     setEditSaving(true);
     setEditError(null);
     try {
-      const res = await api.updateProduct(editingProduct.id, {
+      const payload = {
         name: editName.trim(),
-        category: editCategory.trim(),
+        category: editCategory.trim() || 'General',
         description: editDescription.trim(),
         costPriceNpr: cost,
         proposedSellingPriceNpr: selling,
         finalSellingPriceNpr: selling,
         stockQuantity: Math.max(0, Number(editStockQuantity) || 0),
         sku: editSku.trim(),
-        imageUrl: editImageUrl.trim(),
+        imageUrl: primaryImg,
         galleryImages: editGalleryImages
-      });
+      };
+
+      const res = await api.updateProduct(editingProduct.id, payload);
 
       if (res.success) {
         setFeedbackMsg({
           type: 'success',
-          text: `Product "${editName.trim()}" and photos updated successfully!`
+          text: `Product "${editName.trim()}" and photos saved successfully!`
         });
+
+        // Instantly update product in local React state
+        const updatedProduct: Product = res.product || {
+          ...editingProduct,
+          ...payload,
+          updatedAt: new Date().toISOString()
+        };
+
+        setProducts(prev => prev.map(p => p.id === editingProduct.id ? updatedProduct : p));
         setEditModalOpen(false);
-        await loadProducts();
+
+        // Background reload to sync with backend
+        loadProducts().catch(() => {});
         setTimeout(() => setFeedbackMsg(null), 5000);
       } else {
         setEditError((res as any).error || 'Failed to update product');
       }
     } catch (err: any) {
-      setEditError(err.message || 'Failed to update product');
+      console.error('Save product edit error:', err);
+      setEditError(err.message || 'Failed to update product. Please try again.');
     } finally {
       setEditSaving(false);
     }
@@ -336,51 +352,51 @@ export const AdminProducts: React.FC = () => {
   });
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
+    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Title & Filter Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
-            Critical Financial Oversight
+            Critical Financial Oversight &amp; Catalog Management
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-950 mt-0.5">
-            Admin Product Catalog & Commissions
+            Admin Product Catalog &amp; Commissions
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Edit product specifications, upload photos, and configure 3-level commissions, cashbacks, and merchant shares.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Edit product specifications, upload photos from device gallery, and configure 3-level commissions, cashbacks, and merchant shares.
           </p>
         </div>
 
         {/* Status Filters */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl text-xs font-bold self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl text-xs font-bold self-start lg:self-auto">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3.5 py-2 rounded-xl transition-all ${
               statusFilter === 'all'
                 ? 'bg-white text-slate-950 shadow-xs'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
-            All ({products.length})
+            All Products ({products.length})
           </button>
           <button
             onClick={() => setStatusFilter('pending_approval')}
-            className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1 ${
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center space-x-1.5 ${
               statusFilter === 'pending_approval'
                 ? 'bg-amber-400 text-slate-950 shadow-xs'
                 : 'text-amber-800 hover:text-amber-950'
             }`}
           >
-            <span>Pending</span>
+            <span>Pending Review</span>
             {pendingCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-black">
+              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-black animate-pulse">
                 {pendingCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setStatusFilter('approved')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3.5 py-2 rounded-xl transition-all ${
               statusFilter === 'approved'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-950'
@@ -390,7 +406,7 @@ export const AdminProducts: React.FC = () => {
           </button>
           <button
             onClick={() => setStatusFilter('rejected')}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3.5 py-2 rounded-xl transition-all ${
               statusFilter === 'rejected'
                 ? 'bg-red-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-950'
@@ -403,7 +419,7 @@ export const AdminProducts: React.FC = () => {
 
       {/* Alert banner if products are waiting */}
       {pendingCount > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-xs">
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-900 shadow-xs">
           <div className="flex items-start sm:items-center space-x-2.5">
             <ShoppingBag className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0 animate-pulse" />
             <span>
@@ -414,7 +430,7 @@ export const AdminProducts: React.FC = () => {
           {statusFilter !== 'pending_approval' && (
             <button
               onClick={() => setStatusFilter('pending_approval')}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold shrink-0 self-start sm:self-auto"
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black shrink-0 self-start sm:self-auto text-xs"
             >
               Show Pending
             </button>
@@ -423,141 +439,273 @@ export const AdminProducts: React.FC = () => {
       )}
 
       {feedbackMsg && (
-        <div className={`p-4 rounded-2xl text-xs font-bold flex items-center space-x-2 ${
+        <div className={`p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-center space-x-2.5 ${
           feedbackMsg.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-red-50 border border-red-200 text-red-700'
         }`}>
-          {feedbackMsg.type === 'success' ? <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />}
+          {feedbackMsg.type === 'success' ? <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />}
           <span>{feedbackMsg.text}</span>
         </div>
       )}
 
-      {/* Products Table (Desktop) / Cards (Mobile) */}
+      {/* Products Catalog: Dedicated Mobile Cards + Desktop Table */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-xs text-slate-500 flex flex-col items-center justify-center space-y-2">
-            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
-            <span>Loading catalog items...</span>
+            <Loader2 className="w-7 h-7 animate-spin text-amber-500" />
+            <span className="font-bold">Loading catalog items...</span>
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs">
+          <div className="p-12 text-center text-slate-400 text-xs sm:text-sm font-medium">
             No products found matching filter &quot;{statusFilter}&quot;.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[700px]">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
-                <tr>
-                  <th className="py-3.5 px-4">Product & Shop</th>
-                  <th className="py-3.5 px-4 text-right">Cost Price</th>
-                  <th className="py-3.5 px-4 text-right">Selling Price</th>
-                  <th className="py-3.5 px-4 text-right">Gross Margin</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Approved Commissions</th>
-                  <th className="py-3.5 px-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredProducts.map((p) => {
-                  const margin = (p.finalSellingPriceNpr || p.proposedSellingPriceNpr) - p.costPriceNpr;
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={p.imageUrl}
-                            alt={p.name}
-                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-50"
-                          />
-                          <div className="min-w-0">
-                            <p className="font-bold text-slate-900 truncate max-w-xs">{p.name}</p>
-                            <span className="text-[10px] text-amber-700 font-semibold block">{p.shopName}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">Stock: {p.stockQuantity}</span>
+          <>
+            {/* 1. DESKTOP TABLE VIEW (hidden on mobile) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th className="py-4 px-4">Product &amp; Shop</th>
+                    <th className="py-4 px-4 text-right">Cost Price</th>
+                    <th className="py-4 px-4 text-right">Selling Price</th>
+                    <th className="py-4 px-4 text-right">Gross Margin</th>
+                    <th className="py-4 px-4 text-center">Status</th>
+                    <th className="py-4 px-4">Approved Commissions</th>
+                    <th className="py-4 px-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredProducts.map((p) => {
+                    const margin = (p.finalSellingPriceNpr || p.proposedSellingPriceNpr) - p.costPriceNpr;
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center space-x-3.5">
+                            <img
+                              src={p.imageUrl}
+                              alt={p.name}
+                              className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0 bg-slate-50 shadow-2xs"
+                            />
+                            <div className="min-w-0">
+                              <p className="font-extrabold text-slate-900 text-sm truncate max-w-sm">{p.name}</p>
+                              <span className="text-xs text-amber-700 font-bold block">{p.shopName}</span>
+                              <div className="flex items-center space-x-2 mt-0.5 text-[11px] text-slate-400 font-mono">
+                                <span>Stock: <strong>{p.stockQuantity}</strong></span>
+                                <span>•</span>
+                                <span>SKU: {p.sku || 'N/A'}</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-medium text-slate-600 font-mono">
-                        {formatNPR(p.costPriceNpr)}
-                      </td>
-                      <td className="py-3 px-4 text-right font-black text-slate-900 font-mono">
-                        {formatNPR(p.finalSellingPriceNpr || p.proposedSellingPriceNpr)}
-                      </td>
-                      <td className="py-3 px-4 text-right font-bold text-emerald-700 font-mono">
-                        {formatNPR(margin)}
-                      </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                          p.status === 'approved'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : p.status === 'rejected'
-                            ? 'bg-red-100 text-red-800'
-                            : p.status === 'disabled'
-                            ? 'bg-slate-100 text-slate-700'
-                            : 'bg-amber-100 text-amber-900 ring-1 ring-amber-300'
-                        }`}>
-                          {p.status === 'pending_approval' ? 'Pending Approval' : p.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-[11px] text-slate-600">
-                        {p.commissionSettings ? (
-                          <div className="space-y-0.5">
-                            <p>Cashback: <strong className="text-emerald-700">+{p.commissionSettings.customerCashbackType === 'percentage' ? `${p.commissionSettings.customerCashbackValue}%` : formatNPR(p.commissionSettings.customerCashbackValue)}</strong></p>
-                            <p>Ref Pool: <strong>{formatNPR(p.commissionSettings.referralPoolValue)}</strong> (L1: {p.commissionSettings.level1Percentage}%, L2: {p.commissionSettings.level2Percentage}%, L3: {p.commissionSettings.level3Percentage}%)</p>
-                            <p>Shopkeeper: <strong className="text-blue-700">{formatNPR(p.commissionSettings.shopkeeperCommissionValue)}</strong></p>
+                        </td>
+                        <td className="py-3.5 px-4 text-right font-semibold text-slate-600 font-mono text-sm">
+                          {formatNPR(p.costPriceNpr)}
+                        </td>
+                        <td className="py-3.5 px-4 text-right font-black text-slate-950 font-mono text-sm">
+                          {formatNPR(p.finalSellingPriceNpr || p.proposedSellingPriceNpr)}
+                        </td>
+                        <td className="py-3.5 px-4 text-right font-black text-emerald-700 font-mono text-sm">
+                          {formatNPR(margin)}
+                        </td>
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            p.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : p.status === 'rejected'
+                              ? 'bg-red-100 text-red-800'
+                              : p.status === 'disabled'
+                              ? 'bg-slate-100 text-slate-700'
+                              : 'bg-amber-100 text-amber-900 ring-1 ring-amber-300'
+                          }`}>
+                            {p.status === 'pending_approval' ? 'Pending Approval' : p.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-[11px] text-slate-600">
+                          {p.commissionSettings ? (
+                            <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                              <p>Cashback: <strong className="text-emerald-700 font-bold">+{p.commissionSettings.customerCashbackType === 'percentage' ? `${p.commissionSettings.customerCashbackValue}%` : formatNPR(p.commissionSettings.customerCashbackValue)}</strong></p>
+                              <p>Ref Pool: <strong className="font-bold">{formatNPR(p.commissionSettings.referralPoolValue)}</strong> (L1: {p.commissionSettings.level1Percentage}%, L2: {p.commissionSettings.level2Percentage}%, L3: {p.commissionSettings.level3Percentage}%)</p>
+                              <p>Shopkeeper: <strong className="text-blue-700 font-bold">{formatNPR(p.commissionSettings.shopkeeperCommissionValue)}</strong></p>
+                            </div>
+                          ) : (
+                            <span className="text-amber-700 font-bold italic text-xs bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 inline-block">
+                              Requires configuration
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center space-x-1.5">
+                            <button
+                              onClick={() => openEditModal(p)}
+                              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold text-xs flex items-center space-x-1 transition-colors"
+                              title="Edit Product Details & Photos"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Edit &amp; Photos</span>
+                            </button>
+
+                            <button
+                              onClick={() => openConfigurator(p)}
+                              className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs flex items-center space-x-1 shadow-xs transition-colors"
+                              title="Configure Commissions & Approve"
+                            >
+                              <Sliders className="w-3.5 h-3.5" />
+                              <span>{p.status === 'approved' ? 'Commissions' : 'Configure & Approve'}</span>
+                            </button>
+
+                            {p.status === 'pending_approval' && (
+                              <button
+                                onClick={() => {
+                                  setSelectedProduct(p);
+                                  setRejectModalOpen(true);
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs transition-colors"
+                                title="Reject Product"
+                              >
+                                Reject
+                              </button>
+                            )}
+
+                            {p.status !== 'pending_approval' && (
+                              <button
+                                onClick={() => handleToggleStatus(p.id)}
+                                className={`p-1.5 rounded-xl transition-colors ${p.status === 'approved' ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'}`}
+                                title={p.status === 'approved' ? 'Disable Product' : 'Enable Product'}
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
-                        ) : (
-                          <span className="text-amber-700 font-semibold italic text-[11px]">Requires configuration</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        <div className="flex items-center justify-center space-x-1.5">
-                          <button
-                            onClick={() => openEditModal(p)}
-                            className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold text-xs flex items-center space-x-1 transition-colors"
-                            title="Edit Product Details & Photos"
-                          >
-                            <Pencil className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Edit & Photos</span>
-                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                          <button
-                            onClick={() => openConfigurator(p)}
-                            className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs flex items-center space-x-1 shadow-xs transition-colors"
-                            title="Configure Commissions & Approve"
-                          >
-                            <Sliders className="w-3.5 h-3.5" />
-                            <span>{p.status === 'approved' ? 'Edit Settings' : 'Configure & Approve'}</span>
-                          </button>
-
-                          {p.status === 'pending_approval' && (
-                            <button
-                              onClick={() => {
-                                setSelectedProduct(p);
-                                setRejectModalOpen(true);
-                              }}
-                              className="px-2.5 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs transition-colors"
-                              title="Reject Product"
-                            >
-                              Reject
-                            </button>
-                          )}
-
-                          {p.status !== 'pending_approval' && (
-                            <button
-                              onClick={() => handleToggleStatus(p.id)}
-                              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                              title={p.status === 'approved' ? 'Disable Product' : 'Enable Product'}
-                            >
-                              <Ban className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+            {/* 2. DEDICATED MOBILE CARDS VIEW (Clean, professional, thumb-friendly on all mobile screens) */}
+            <div className="md:hidden divide-y divide-slate-100 p-3 sm:p-4 space-y-4">
+              {filteredProducts.map((p) => {
+                const margin = (p.finalSellingPriceNpr || p.proposedSellingPriceNpr) - p.costPriceNpr;
+                return (
+                  <div key={p.id} className="pt-4 first:pt-0 space-y-3.5 bg-white">
+                    {/* Top Row: Photo + Name + Status */}
+                    <div className="flex items-start space-x-3">
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shrink-0 bg-slate-50 shadow-2xs"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-1.5">
+                          <h4 className="font-black text-slate-950 text-sm leading-snug truncate">
+                            {p.name}
+                          </h4>
+                          <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                            p.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : p.status === 'rejected'
+                              ? 'bg-red-100 text-red-800'
+                              : p.status === 'disabled'
+                              ? 'bg-slate-100 text-slate-700'
+                              : 'bg-amber-100 text-amber-900 ring-1 ring-amber-300'
+                          }`}>
+                            {p.status === 'pending_approval' ? 'Pending' : p.status}
+                          </span>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <span className="text-xs text-amber-700 font-bold block mt-0.5">{p.shopName}</span>
+                        <div className="flex items-center space-x-2 text-[10px] text-slate-500 font-mono mt-0.5">
+                          <span>Cat: <strong>{p.category}</strong></span>
+                          <span>•</span>
+                          <span>Stock: <strong>{p.stockQuantity}</strong></span>
+                          {p.sku && <span>• SKU: {p.sku}</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Financial 3-Box Strip (Cost, Selling, Margin) */}
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+                      <div>
+                        <span className="text-[10px] text-slate-500 block uppercase font-bold">Cost</span>
+                        <span className="font-bold text-slate-700 font-mono text-xs">{formatNPR(p.costPriceNpr)}</span>
+                      </div>
+                      <div className="border-x border-slate-200">
+                        <span className="text-[10px] text-slate-500 block uppercase font-bold">Selling</span>
+                        <span className="font-black text-slate-950 font-mono text-xs">{formatNPR(p.finalSellingPriceNpr || p.proposedSellingPriceNpr)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-500 block uppercase font-bold">Margin</span>
+                        <span className="font-black text-emerald-700 font-mono text-xs">+{formatNPR(margin)}</span>
+                      </div>
+                    </div>
+
+                    {/* Commissions summary */}
+                    {p.commissionSettings ? (
+                      <div className="text-[11px] bg-amber-50/60 p-2.5 rounded-2xl border border-amber-200/60 text-slate-700 space-y-0.5">
+                        <div className="flex justify-between">
+                          <span>Customer Cashback:</span>
+                          <strong className="text-emerald-700 font-bold font-mono">
+                            +{p.commissionSettings.customerCashbackType === 'percentage' ? `${p.commissionSettings.customerCashbackValue}%` : formatNPR(p.commissionSettings.customerCashbackValue)}
+                          </strong>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Referral Pool:</span>
+                          <strong className="font-bold font-mono">{formatNPR(p.commissionSettings.referralPoolValue)} (L1: {p.commissionSettings.level1Percentage}%, L2: {p.commissionSettings.level2Percentage}%, L3: {p.commissionSettings.level3Percentage}%)</strong>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Shopkeeper Comm:</span>
+                          <strong className="text-blue-700 font-bold font-mono">{formatNPR(p.commissionSettings.shopkeeperCommissionValue)}</strong>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs font-bold text-amber-800 bg-amber-50 p-2.5 rounded-2xl border border-amber-200 text-center">
+                        ⚠️ Commissions not configured yet
+                      </div>
+                    )}
+
+                    {/* Action Buttons in Full-Width Grid */}
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button
+                        onClick={() => openEditModal(p)}
+                        className="py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-black text-xs flex items-center justify-center space-x-1.5 transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Edit &amp; Photos</span>
+                      </button>
+
+                      <button
+                        onClick={() => openConfigurator(p)}
+                        className="py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center space-x-1.5 shadow-xs transition-colors"
+                      >
+                        <Sliders className="w-3.5 h-3.5" />
+                        <span>{p.status === 'approved' ? 'Commissions' : 'Configure'}</span>
+                      </button>
+
+                      {p.status === 'pending_approval' ? (
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(p);
+                            setRejectModalOpen(true);
+                          }}
+                          className="col-span-2 py-2 px-3 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs transition-colors text-center"
+                        >
+                          Reject Submission
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleStatus(p.id)}
+                          className="col-span-2 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors text-center flex items-center justify-center space-x-1.5"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          <span>{p.status === 'approved' ? 'Disable Product (Hide from Store)' : 'Enable Product (Publish to Store)'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
@@ -903,171 +1051,237 @@ export const AdminProducts: React.FC = () => {
       {/* FULL-SCREEN RESPONSIVE PRODUCT EDIT & PHOTO UPLOAD MODAL */}
       {editModalOpen && editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto">
-          <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl bg-white sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-200 flex flex-col overflow-hidden">
+          <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-4xl lg:max-w-5xl bg-white sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-200 flex flex-col overflow-hidden">
             {/* Header (Sticky) */}
             <div className="shrink-0 p-4 sm:p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between sticky top-0 z-10">
               <div className="min-w-0 pr-3">
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">
-                  Admin Product Editor
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded">
+                  Admin Product &amp; Photos Editor
                 </span>
-                <h3 className="text-lg sm:text-xl font-black text-slate-950 truncate">
-                  Edit Product &amp; Photos
+                <h3 className="text-lg sm:text-2xl font-black text-slate-950 truncate mt-1">
+                  Edit Product Details &amp; Gallery
                 </h3>
-                <p className="text-xs text-slate-500 truncate">
-                  Shop: {editingProduct.shopName} • ID: {editingProduct.id}
+                <p className="text-xs text-slate-500 truncate mt-0.5">
+                  Store: <strong className="text-slate-800">{editingProduct.shopName}</strong> • ID: <span className="font-mono">{editingProduct.id}</span>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center text-lg font-bold border border-slate-200 shrink-0"
+                className="w-9 h-9 rounded-full bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center text-lg font-bold border border-slate-200 shrink-0 shadow-xs"
               >
                 ✕
               </button>
             </div>
 
-            {/* Error Banner */}
+            {/* Error Banner at Top */}
             {editError && (
-              <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center space-x-1.5">
+              <div className="mx-4 sm:mx-6 mt-4 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-bold flex items-center space-x-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
                 <span>{editError}</span>
               </div>
             )}
 
-            {/* Scrollable Form Body */}
-            <form onSubmit={handleSaveProductEdit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs flex flex-col justify-between">
-              <div className="space-y-5">
-                {/* Product Photos & Gallery Uploader */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                  <ImageUploadGallery
-                    primaryImage={editImageUrl}
-                    onChangePrimaryImage={setEditImageUrl}
-                    galleryImages={editGalleryImages}
-                    onChangeGalleryImages={setEditGalleryImages}
-                    label="Product Photos & Gallery"
-                    helpText="Upload product photos directly from your computer / phone gallery, or enter an image URL."
-                  />
+            {/* Scrollable Form Body with Responsive 2-Column Grid */}
+            <form onSubmit={handleSaveProductEdit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 text-xs flex flex-col justify-between">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left Column: Photos & Gallery Uploader */}
+                <div className="lg:col-span-5 space-y-3">
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                    <ImageUploadGallery
+                      primaryImage={editImageUrl}
+                      onChangePrimaryImage={setEditImageUrl}
+                      galleryImages={editGalleryImages}
+                      onChangeGalleryImages={setEditGalleryImages}
+                      label="Product Photos & Device Gallery"
+                      helpText="Upload from your computer or phone gallery. Click the star on any photo to set as primary."
+                    />
+                  </div>
+                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed">
+                    💡 <strong>Pro Tip:</strong> Primary photo will be shown in public storefront and search catalogs. Additional gallery photos are shown on the interactive product detail page.
+                  </div>
                 </div>
 
-                {/* Basic Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="sm:col-span-2">
-                    <label className="block font-bold text-slate-800 mb-1">Product Title</label>
+                {/* Right Column: Pricing, Margins, Titles, and Stock */}
+                <div className="lg:col-span-7 space-y-4">
+                  {/* Product Title */}
+                  <div>
+                    <label className="block font-black text-slate-800 text-xs mb-1.5 uppercase tracking-wide">
+                      Product Title / Item Name *
+                    </label>
                     <input
                       type="text"
                       required
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Product Title"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-400"
+                      placeholder="e.g. Organic Himalayan Honey 500g"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-400 bg-white shadow-2xs"
                     />
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-slate-800 mb-1">Category</label>
-                    <input
-                      type="text"
-                      required
-                      value={editCategory}
-                      onChange={(e) => setEditCategory(e.target.value)}
-                      placeholder="e.g. Organic & Food, Handicrafts"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
-                    />
+                  {/* Category & SKU Code */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-black text-slate-800 text-xs mb-1.5 uppercase tracking-wide">
+                        Category *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editCategory}
+                        onChange={(e) => setEditCategory(e.target.value)}
+                        placeholder="e.g. Organic & Food, Handicrafts"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:border-amber-400 bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-black text-slate-800 text-xs mb-1.5 uppercase tracking-wide">
+                        SKU Identifier Code
+                      </label>
+                      <input
+                        type="text"
+                        value={editSku}
+                        onChange={(e) => setEditSku(e.target.value)}
+                        placeholder="SKU-XXXXXX"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-amber-400 bg-white"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-slate-800 mb-1">SKU Code</label>
-                    <input
-                      type="text"
-                      value={editSku}
-                      onChange={(e) => setEditSku(e.target.value)}
-                      placeholder="SKU-XXXXXX"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
-                    />
+                  {/* Pricing & Gross Margin Calculation Grid */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
+                      Financial Unit Economics (NPR)
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-bold text-slate-700 text-[11px] mb-1">
+                          Merchant Cost Price *
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-xs">रु</span>
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            value={editCostPriceNpr}
+                            onChange={(e) => setEditCostPriceNpr(Number(e.target.value) || 0)}
+                            className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold font-mono focus:outline-none focus:border-amber-400 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-slate-700 text-[11px] mb-1">
+                          Final Selling Price *
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-amber-600 font-bold text-xs">रु</span>
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            value={editSellingPriceNpr}
+                            onChange={(e) => setEditSellingPriceNpr(Number(e.target.value) || 0)}
+                            className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm font-black font-mono text-amber-700 focus:outline-none focus:border-amber-400 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-slate-700 text-[11px] mb-1">
+                          Calculated Gross Margin
+                        </label>
+                        <div className={`w-full py-2 px-3 rounded-xl border text-xs sm:text-sm font-black font-mono text-center flex items-center justify-center ${
+                          (editSellingPriceNpr - editCostPriceNpr) >= 0
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                            : 'bg-red-50 border-red-200 text-red-700'
+                        }`}>
+                          {formatNPR(editSellingPriceNpr - editCostPriceNpr)}
+                        </div>
+                      </div>
+                    </div>
+                    {editSellingPriceNpr < editCostPriceNpr && (
+                      <p className="text-[11px] text-red-600 font-bold flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>Selling price cannot be lower than cost price!</span>
+                      </p>
+                    )}
                   </div>
 
+                  {/* Stock Units */}
                   <div>
-                    <label className="block font-bold text-slate-800 mb-1">Merchant Cost Price (NPR)</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={editCostPriceNpr}
-                      onChange={(e) => setEditCostPriceNpr(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-800 mb-1">Final Selling Price (NPR)</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={editSellingPriceNpr}
-                      onChange={(e) => setEditSellingPriceNpr(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-amber-700 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-800 mb-1">Available Stock Units</label>
+                    <label className="block font-black text-slate-800 text-xs mb-1.5 uppercase tracking-wide">
+                      Available Stock Inventory (Units) *
+                    </label>
                     <input
                       type="number"
                       required
                       min="0"
                       value={editStockQuantity}
-                      onChange={(e) => setEditStockQuantity(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
+                      onChange={(e) => setEditStockQuantity(Number(e.target.value) || 0)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold font-mono focus:outline-none focus:border-amber-400 bg-white"
                     />
                   </div>
 
+                  {/* Product Description */}
                   <div>
-                    <label className="block font-bold text-slate-800 mb-1">Gross Margin (NPR)</label>
-                    <div className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-black text-emerald-700 font-mono">
-                      {formatNPR(editSellingPriceNpr - editCostPriceNpr)}
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block font-bold text-slate-800 mb-1">Product Description</label>
+                    <label className="block font-black text-slate-800 text-xs mb-1.5 uppercase tracking-wide">
+                      Product Description &amp; Specifications
+                    </label>
                     <textarea
                       rows={3}
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
-                      placeholder="Detailed specifications, features, origin..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
+                      placeholder="Detailed specifications, features, organic origin, dimensions..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:outline-none focus:border-amber-400 bg-white"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Actions Footer (Sticky) */}
-              <div className="shrink-0 pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={editSaving}
-                  className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-50"
-                >
-                  {editSaving ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                      <span>Saving Changes...</span>
-                    </>
+              {/* Actions Footer (Sticky at bottom of modal) */}
+              <div className="shrink-0 pt-4 mt-6 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white">
+                <div className="flex-1">
+                  {editError ? (
+                    <span className="text-xs text-red-600 font-bold flex items-center space-x-1">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                      <span>{editError}</span>
+                    </span>
                   ) : (
-                    <>
-                      <Save className="w-4 h-4 text-slate-950" />
-                      <span>Save Product & Photos</span>
-                    </>
+                    <span className="text-[11px] text-slate-500">
+                      Changes will update live across the entire storefront and merchant inventory.
+                    </span>
                   )}
-                </button>
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setEditModalOpen(false)}
+                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editSaving}
+                    className="flex-2 sm:flex-none px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-md transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                  >
+                    {editSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                        <span>Saving Product...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 text-slate-950" />
+                        <span>Save Product &amp; Photos</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

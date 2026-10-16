@@ -28,6 +28,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 }) => {
   const { addToCart } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
+  const [activeImage, setActiveImage] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [addedNotice, setAddedNotice] = useState(false);
@@ -36,7 +37,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     async function load() {
       try {
         const res = await api.getProduct(productId);
-        if (res.success) setProduct(res.product);
+        if (res.success && res.product) {
+          setProduct(res.product);
+          setActiveImage(res.product.imageUrl);
+        }
       } catch (err) {
         console.error('Failed to load product detail:', err);
       } finally {
@@ -76,8 +80,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     setTimeout(() => setAddedNotice(false), 2500);
   };
 
+  const allImages = [product.imageUrl, ...(product.galleryImages || [])].filter(Boolean);
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       <button
         onClick={onBack}
         className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
@@ -86,16 +92,36 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         <span>Back to Products</span>
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-xs">
-        {/* Product Image */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 bg-white p-4 sm:p-8 lg:p-10 rounded-3xl border border-slate-200 shadow-xs">
+        {/* Product Image & Gallery Thumbnails */}
         <div className="space-y-4">
-          <div className="aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-100">
+          <div className="aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 shadow-xs">
             <img
-              src={product.imageUrl}
+              src={activeImage || product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-all duration-300"
             />
           </div>
+
+          {/* Gallery Thumbnails Strip */}
+          {allImages.length > 1 && (
+            <div className="flex items-center space-x-2.5 overflow-x-auto pb-1">
+              {allImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(img)}
+                  className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 shrink-0 transition-all ${
+                    (activeImage || product.imageUrl) === img
+                      ? 'border-amber-500 ring-2 ring-amber-300/60 scale-102'
+                      : 'border-slate-200 hover:border-slate-300 opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-2 text-center text-[11px] text-slate-600">
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
               <ShieldCheck className="w-4 h-4 text-amber-500 mx-auto mb-1" />

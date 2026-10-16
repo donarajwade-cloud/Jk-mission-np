@@ -73,6 +73,12 @@ export const ShopkeeperProducts: React.FC = () => {
       return;
     }
 
+    const primaryImg = editImageUrl.trim() || (editGalleryImages.length > 0 ? editGalleryImages[0] : '');
+    if (!primaryImg) {
+      setEditError('Please upload at least one product photo from your device gallery or enter an image URL');
+      return;
+    }
+
     setEditSubmitting(true);
     setEditError(null);
     try {
@@ -85,7 +91,7 @@ export const ShopkeeperProducts: React.FC = () => {
         finalSellingPriceNpr: editingProduct.status === 'approved' ? (editingProduct.finalSellingPriceNpr || proposed) : proposed,
         stockQuantity: Math.max(0, stock),
         sku: editSku.trim(),
-        imageUrl: editImageUrl.trim(),
+        imageUrl: primaryImg,
         galleryImages: editGalleryImages
       });
 
@@ -177,7 +183,7 @@ export const ShopkeeperProducts: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
@@ -457,8 +463,8 @@ export const ShopkeeperProducts: React.FC = () => {
 
       {/* Edit Product & Photo Upload Modal for Shopkeeper */}
       {editModalOpen && editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-4 sm:my-8">
             <div className="p-6 border-b border-slate-100 bg-blue-50/50 flex items-center justify-between">
               <div>
                 <h3 className="font-extrabold text-slate-900 text-base">Edit Product &amp; Photos</h3>
