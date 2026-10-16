@@ -295,6 +295,22 @@ function initDefaultSeed() {
     shops: [shop],
     products,
     orders: [],
+    cashbackCouponRule: {
+      id: "rule_cb_default",
+      enabled: true,
+      title: "3-Level Purchase Cashback Coupon Engine",
+      level1Percentage: 10,
+      level2Percentage: 15,
+      level3Percentage: 20,
+      level1MinSpendNpr: 0,
+      level2MinSpendNpr: 1e3,
+      level3MinSpendNpr: 2500,
+      validityDays: 30,
+      minOrderToApplyNpr: 200,
+      maxDiscountNpr: 1e3,
+      updatedAt: now
+    },
+    coupons: [],
     cashbackLedger: [],
     referralLedger: [],
     shopkeeperLedger: [],
@@ -453,6 +469,28 @@ function loadDatabase() {
           migrated = true;
         }
       }
+      if (!dbState.cashbackCouponRule) {
+        dbState.cashbackCouponRule = {
+          id: "rule_cb_default",
+          enabled: true,
+          title: "3-Level Purchase Cashback Coupon Engine",
+          level1Percentage: 10,
+          level2Percentage: 15,
+          level3Percentage: 20,
+          level1MinSpendNpr: 0,
+          level2MinSpendNpr: 1e3,
+          level3MinSpendNpr: 2500,
+          validityDays: 30,
+          minOrderToApplyNpr: 200,
+          maxDiscountNpr: 1e3,
+          updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+        };
+        migrated = true;
+      }
+      if (!dbState.coupons) {
+        dbState.coupons = [];
+        migrated = true;
+      }
       if (migrated) {
         persistDb();
       }
@@ -534,21 +572,40 @@ function requireRole(...roles) {
     next();
   };
 }
+function cleanMobileDigits(num) {
+  if (!num) return "";
+  const digits = num.replace(/\D/g, "");
+  return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+function matchesMobileOrReferral(userMobile, userRef, target) {
+  if (!target) return false;
+  if (userMobile === target || userRef === target) return true;
+  const targetDigits = cleanMobileDigits(target);
+  if (!targetDigits || targetDigits.length < 8) return false;
+  if (userMobile && cleanMobileDigits(userMobile) === targetDigits) return true;
+  if (userRef && cleanMobileDigits(userRef) === targetDigits) return true;
+  return false;
+}
 function getUplineChain(buyerMobile) {
   const chain = {};
-  const buyer = db.data.users.find((u) => u.mobile === buyerMobile);
+  const buyer = db.data.users.find((u) => matchesMobileOrReferral(u.mobile, u.referralId, buyerMobile) || u.id === buyerMobile);
   if (!buyer || !buyer.sponsorReferralId) {
     return chain;
   }
-  const sponsorL1 = db.data.users.find((u) => u.mobile === buyer.sponsorReferralId && u.status === "active");
+  const findUserByRef = (refId, excludeIds = []) => {
+    return db.data.users.find(
+      (u) => !excludeIds.includes(u.id) && u.status !== "suspended" && matchesMobileOrReferral(u.mobile, u.referralId, refId)
+    );
+  };
+  const sponsorL1 = findUserByRef(buyer.sponsorReferralId, [buyer.id]);
   if (sponsorL1) {
     chain.level1 = { userId: sponsorL1.id, mobile: sponsorL1.mobile, name: sponsorL1.name };
     if (sponsorL1.sponsorReferralId) {
-      const sponsorL2 = db.data.users.find((u) => u.mobile === sponsorL1.sponsorReferralId && u.status === "active");
+      const sponsorL2 = findUserByRef(sponsorL1.sponsorReferralId, [buyer.id, sponsorL1.id]);
       if (sponsorL2) {
         chain.level2 = { userId: sponsorL2.id, mobile: sponsorL2.mobile, name: sponsorL2.name };
         if (sponsorL2.sponsorReferralId) {
-          const sponsorL3 = db.data.users.find((u) => u.mobile === sponsorL2.sponsorReferralId && u.status === "active");
+          const sponsorL3 = findUserByRef(sponsorL2.sponsorReferralId, [buyer.id, sponsorL1.id, sponsorL2.id]);
           if (sponsorL3) {
             chain.level3 = { userId: sponsorL3.id, mobile: sponsorL3.mobile, name: sponsorL3.name };
           }
@@ -1004,10 +1061,26 @@ function executeOrderCommissions(orderId) {
     }
     for (const item of order.items) {
       const product = data.products.find((p) => p.id === item.productId);
-      if (!product || !product.commissionSettings) {
+      if (!product) {
         continue;
       }
-      const settings = product.commissionSettings;
+      let settings = product.commissionSettings;
+      if (!settings) {
+        const margin = Math.max(0, item.unitPriceNpr - item.unitCostNpr);
+        settings = {
+          customerCashbackType: "fixed",
+          customerCashbackValue: Math.round(margin * 0.15),
+          referralPoolType: "fixed",
+          referralPoolValue: Math.round(margin * 0.35),
+          level1Percentage: 50,
+          level2Percentage: 30,
+          level3Percentage: 20,
+          shopkeeperCommissionType: "fixed",
+          shopkeeperCommissionValue: Math.round(margin * 0.2),
+          companyShareNpr: Math.round(margin * 0.2),
+          permittedExpensesNpr: Math.round(margin * 0.1)
+        };
+      }
       const preview = calculateProductDistribution(
         item.unitPriceNpr,
         item.unitCostNpr,
@@ -1654,8 +1727,68 @@ router2.put("/:id/toggle-status", authenticateToken, requireRole("admin"), (req,
       entityId: prod.id,
       timestamp: now
     });
+    return prod;
   });
-  res.json({ success: true, product: db.data.products.find((p) => p.id === req.params.id) });
+  res.json({ success: true, message: "Status updated" });
+});
+router2.put("/:id", authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const user = req.user;
+  const {
+    name,
+    category,
+    description,
+    costPriceNpr,
+    proposedSellingPriceNpr,
+    finalSellingPriceNpr,
+    stockQuantity,
+    sku,
+    imageUrl,
+    galleryImages,
+    specifications
+  } = req.body;
+  const result = db.transaction((data) => {
+    const prod = data.products.find((p) => p.id === id);
+    if (!prod) {
+      return { success: false, status: 404, error: "Product not found" };
+    }
+    if (user.role !== "admin" && prod.shopkeeperUserId !== user.userId) {
+      return { success: false, status: 403, error: "Permission denied to edit this product" };
+    }
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    if (name) prod.name = String(name).trim();
+    if (category) prod.category = String(category).trim();
+    if (description !== void 0) prod.description = String(description).trim();
+    if (costPriceNpr !== void 0 && !isNaN(Number(costPriceNpr))) prod.costPriceNpr = Number(costPriceNpr);
+    if (proposedSellingPriceNpr !== void 0 && !isNaN(Number(proposedSellingPriceNpr))) prod.proposedSellingPriceNpr = Number(proposedSellingPriceNpr);
+    if (finalSellingPriceNpr !== void 0 && !isNaN(Number(finalSellingPriceNpr))) prod.finalSellingPriceNpr = Number(finalSellingPriceNpr);
+    if (stockQuantity !== void 0 && !isNaN(Number(stockQuantity))) prod.stockQuantity = Math.max(0, parseInt(stockQuantity, 10));
+    if (sku) prod.sku = String(sku).trim();
+    if (imageUrl) prod.imageUrl = String(imageUrl).trim();
+    if (Array.isArray(galleryImages)) prod.galleryImages = galleryImages;
+    if (specifications && typeof specifications === "object") prod.specifications = specifications;
+    prod.updatedAt = now;
+    data.auditLogs.push({
+      id: `audit_edit_${prod.id}_${Date.now()}`,
+      action: "PRODUCT_UPDATED",
+      actorUserId: user.userId,
+      actorRole: user.role,
+      details: `Product "${prod.name}" edited by ${user.role} (${user.name})`,
+      entityType: "product",
+      entityId: prod.id,
+      timestamp: now
+    });
+    return { success: true, product: prod };
+  });
+  if (!result.success) {
+    res.status(result.status || 400).json(result);
+  } else {
+    res.json({
+      success: true,
+      message: "Product details and photos updated successfully",
+      product: result.product
+    });
+  }
 });
 var productRoutes_default = router2;
 
@@ -1663,7 +1796,7 @@ var productRoutes_default = router2;
 import { Router as Router3 } from "express";
 var router3 = Router3();
 router3.post("/", authenticateToken, requireRole("customer"), (req, res) => {
-  const { items, paymentMethod, paymentReference, shippingAddress } = req.body;
+  const { items, paymentMethod, paymentReference, shippingAddress, couponCode } = req.body;
   if (!items || !Array.isArray(items) || items.length === 0) {
     res.status(400).json({ success: false, error: "At least one item is required in the cart" });
     return;
@@ -1711,6 +1844,81 @@ router3.post("/", authenticateToken, requireRole("customer"), (req, res) => {
     const orderId = `ord_${Date.now()}`;
     const orderNumber = `JKM-${(/* @__PURE__ */ new Date()).getFullYear()}-${Math.floor(1e5 + Math.random() * 9e5)}`;
     const now = (/* @__PURE__ */ new Date()).toISOString();
+    let appliedCouponDiscountNpr = 0;
+    let appliedCouponCode = void 0;
+    if (couponCode && typeof couponCode === "string") {
+      const cleanCode = couponCode.trim().toUpperCase();
+      const cpn = (data.coupons || []).find(
+        (c) => c.code.toUpperCase() === cleanCode && (c.userId === req.user.userId || c.userId === "all")
+      );
+      if (cpn && cpn.status === "available" && cpn.expiresAt > now && totalNpr >= cpn.minOrderAmountNpr) {
+        let disc = Math.round(totalNpr * cpn.discountPercentage / 100);
+        if (cpn.maxDiscountNpr && disc > cpn.maxDiscountNpr) {
+          disc = cpn.maxDiscountNpr;
+        }
+        disc = Math.min(disc, totalNpr);
+        appliedCouponDiscountNpr = disc;
+        appliedCouponCode = cpn.code;
+        cpn.status = "used";
+        cpn.usedInOrderId = orderId;
+        cpn.usedInOrderNumber = orderNumber;
+        cpn.usedAt = now;
+        cpn.discountAppliedNpr = disc;
+      }
+    }
+    const finalPayableNpr = Math.max(0, totalNpr - appliedCouponDiscountNpr);
+    let awardedCouponInfo = void 0;
+    const rule = data.cashbackCouponRule;
+    if (rule && rule.enabled !== false) {
+      let level = 1;
+      let discountPercentage = rule.level1Percentage || 10;
+      if (totalNpr >= (rule.level3MinSpendNpr || 2500)) {
+        level = 3;
+        discountPercentage = rule.level3Percentage || 20;
+      } else if (totalNpr >= (rule.level2MinSpendNpr || 1e3)) {
+        level = 2;
+        discountPercentage = rule.level2Percentage || 15;
+      } else {
+        level = 1;
+        discountPercentage = rule.level1Percentage || 10;
+      }
+      const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+      const newCode = `JKMCB-L${level}-${randomSuffix}`;
+      const validityDays = rule.validityDays || 30;
+      const expiresAt = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1e3).toISOString();
+      const newCoupon = {
+        id: `cpn_${Date.now()}_${randomSuffix}`,
+        code: newCode,
+        userId: req.user.userId,
+        userName: req.user.name,
+        userMobile: req.user.mobile,
+        sourceOrderId: orderId,
+        sourceOrderNumber: orderNumber,
+        level,
+        discountPercentage,
+        minOrderAmountNpr: rule.minOrderToApplyNpr || 200,
+        maxDiscountNpr: rule.maxDiscountNpr || 1e3,
+        status: "available",
+        expiresAt,
+        createdAt: now
+      };
+      data.coupons = data.coupons || [];
+      data.coupons.push(newCoupon);
+      awardedCouponInfo = {
+        code: newCode,
+        discountPercentage,
+        level
+      };
+      data.notifications.push({
+        id: `notif_cpn_${Date.now()}`,
+        recipientUserId: req.user.userId,
+        title: "\u{1F39F}\uFE0F Next Purchase Cashback Coupon Awarded!",
+        message: `Your order #${orderNumber} unlocked a Level ${level} Cashback Coupon (${discountPercentage}% OFF)! Use coupon code "${newCode}" on your next purchase (valid ${validityDays} days).`,
+        type: "cashback",
+        read: false,
+        createdAt: now
+      });
+    }
     const newOrder = {
       id: orderId,
       orderNumber,
@@ -1718,7 +1926,10 @@ router3.post("/", authenticateToken, requireRole("customer"), (req, res) => {
       customerName: req.user.name,
       customerMobile: req.user.mobile,
       items: validatedItems,
-      totalAmountNpr: totalNpr,
+      totalAmountNpr: finalPayableNpr,
+      couponCode: appliedCouponCode,
+      couponDiscountNpr: appliedCouponDiscountNpr,
+      awardedCoupon: awardedCouponInfo,
       paymentMethod: paymentMethod || "esewa",
       paymentReference: paymentReference || void 0,
       paymentStatus: "pending",
@@ -1899,16 +2110,20 @@ router4.get("/customer", authenticateToken, (req, res) => {
 });
 router4.get("/customer/referral-tree", authenticateToken, (req, res) => {
   const targetUserId = req.query.userId || req.user.userId;
-  const user = db.data.users.find((u) => u.id === targetUserId);
+  const user = db.data.users.find((u) => u.id === targetUserId || matchesMobileOrReferral(u.mobile, u.referralId, targetUserId));
   if (!user) {
     res.status(404).json({ success: false, error: "User not found" });
     return;
   }
-  const l1Users = db.data.users.filter((u) => u.sponsorReferralId === user.mobile);
-  const l1Mobiles = l1Users.map((u) => u.mobile);
-  const l2Users = db.data.users.filter((u) => u.sponsorReferralId && l1Mobiles.includes(u.sponsorReferralId));
-  const l2Mobiles = l2Users.map((u) => u.mobile);
-  const l3Users = db.data.users.filter((u) => u.sponsorReferralId && l2Mobiles.includes(u.sponsorReferralId));
+  const l1Users = db.data.users.filter(
+    (u) => u.id !== user.id && u.sponsorReferralId && matchesMobileOrReferral(user.mobile, user.referralId, u.sponsorReferralId)
+  );
+  const l2Users = db.data.users.filter(
+    (u) => u.id !== user.id && !l1Users.some((l1) => l1.id === u.id) && u.sponsorReferralId && l1Users.some((l1) => matchesMobileOrReferral(l1.mobile, l1.referralId, u.sponsorReferralId))
+  );
+  const l3Users = db.data.users.filter(
+    (u) => u.id !== user.id && !l1Users.some((l1) => l1.id === u.id) && !l2Users.some((l2) => l2.id === u.id) && u.sponsorReferralId && l2Users.some((l2) => matchesMobileOrReferral(l2.mobile, l2.referralId, u.sponsorReferralId))
+  );
   const calcLevelStats = (users, level) => {
     const userIds = users.map((u) => u.id);
     const completedOrders = db.data.orders.filter((o) => userIds.includes(o.customerId) && o.orderStatus === "completed");
@@ -2342,11 +2557,15 @@ router5.get("/customers/:id/referral-tree", (req, res) => {
     res.status(404).json({ success: false, error: "Customer not found" });
     return;
   }
-  const l1Users = db.data.users.filter((u) => u.sponsorReferralId === user.mobile);
-  const l1Mobiles = l1Users.map((u) => u.mobile);
-  const l2Users = db.data.users.filter((u) => u.sponsorReferralId && l1Mobiles.includes(u.sponsorReferralId));
-  const l2Mobiles = l2Users.map((u) => u.mobile);
-  const l3Users = db.data.users.filter((u) => u.sponsorReferralId && l2Mobiles.includes(u.sponsorReferralId));
+  const l1Users = db.data.users.filter(
+    (u) => u.id !== user.id && u.sponsorReferralId && matchesMobileOrReferral(user.mobile, user.referralId, u.sponsorReferralId)
+  );
+  const l2Users = db.data.users.filter(
+    (u) => u.id !== user.id && !l1Users.some((l1) => l1.id === u.id) && u.sponsorReferralId && l1Users.some((l1) => matchesMobileOrReferral(l1.mobile, l1.referralId, u.sponsorReferralId))
+  );
+  const l3Users = db.data.users.filter(
+    (u) => u.id !== user.id && !l1Users.some((l1) => l1.id === u.id) && !l2Users.some((l2) => l2.id === u.id) && u.sponsorReferralId && l2Users.some((l2) => matchesMobileOrReferral(l2.mobile, l2.referralId, u.sponsorReferralId))
+  );
   const calcLevelStats = (users, level) => {
     const userIds = users.map((u) => u.id);
     const completedOrders = db.data.orders.filter((o) => userIds.includes(o.customerId) && o.orderStatus === "completed");
@@ -2585,6 +2804,216 @@ router7.put("/mark-all-read", authenticateToken, (req, res) => {
 });
 var notificationRoutes_default = router7;
 
+// server/routes/couponRoutes.ts
+import { Router as Router8 } from "express";
+var router8 = Router8();
+router8.get("/my-coupons", authenticateToken, requireRole("customer"), (req, res) => {
+  const userId = req.user.userId;
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  db.transaction((data) => {
+    data.coupons = data.coupons || [];
+    for (const c of data.coupons) {
+      if (c.status === "available" && c.expiresAt < now) {
+        c.status = "expired";
+      }
+    }
+    return true;
+  });
+  const allCoupons = db.data.coupons || [];
+  const userCoupons = allCoupons.filter((c) => c.userId === userId);
+  userCoupons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  res.json({
+    success: true,
+    coupons: userCoupons,
+    rule: db.data.cashbackCouponRule
+  });
+});
+router8.post("/validate", authenticateToken, requireRole("customer"), (req, res) => {
+  const { code, cartTotalNpr } = req.body;
+  const userId = req.user.userId;
+  if (!code || typeof code !== "string") {
+    res.status(400).json({ success: false, error: "Coupon code is required" });
+    return;
+  }
+  const cleanCode = code.trim().toUpperCase();
+  const subtotal = Number(cartTotalNpr) || 0;
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const coupon = (db.data.coupons || []).find(
+    (c) => c.code.toUpperCase() === cleanCode && (c.userId === userId || c.userId === "all")
+  );
+  if (!coupon) {
+    res.status(404).json({ success: false, error: "Invalid coupon code. Please check and try again." });
+    return;
+  }
+  if (coupon.status === "used") {
+    res.status(400).json({ success: false, error: "This coupon has already been used on a previous order." });
+    return;
+  }
+  if (coupon.expiresAt < now || coupon.status === "expired") {
+    res.status(400).json({ success: false, error: "This cashback coupon has expired." });
+    return;
+  }
+  if (subtotal < coupon.minOrderAmountNpr) {
+    res.status(400).json({
+      success: false,
+      error: `Minimum order amount of NPR ${coupon.minOrderAmountNpr} required to apply this coupon.`
+    });
+    return;
+  }
+  let discountNpr = Math.round(subtotal * coupon.discountPercentage / 100);
+  if (coupon.maxDiscountNpr && discountNpr > coupon.maxDiscountNpr) {
+    discountNpr = coupon.maxDiscountNpr;
+  }
+  discountNpr = Math.min(discountNpr, subtotal);
+  res.json({
+    success: true,
+    valid: true,
+    discountNpr,
+    finalTotalNpr: subtotal - discountNpr,
+    coupon: {
+      code: coupon.code,
+      discountPercentage: coupon.discountPercentage,
+      level: coupon.level,
+      expiresAt: coupon.expiresAt
+    }
+  });
+});
+router8.get("/admin/rules", authenticateToken, requireRole("admin"), (req, res) => {
+  res.json({
+    success: true,
+    rule: db.data.cashbackCouponRule
+  });
+});
+router8.put("/admin/rules", authenticateToken, requireRole("admin"), (req, res) => {
+  const {
+    enabled,
+    title,
+    level1Percentage,
+    level2Percentage,
+    level3Percentage,
+    level1MinSpendNpr,
+    level2MinSpendNpr,
+    level3MinSpendNpr,
+    validityDays,
+    minOrderToApplyNpr,
+    maxDiscountNpr
+  } = req.body;
+  const result = db.transaction((data) => {
+    data.cashbackCouponRule = {
+      id: data.cashbackCouponRule?.id || "rule_cb_default",
+      enabled: enabled !== void 0 ? !!enabled : true,
+      title: title || "3-Level Purchase Cashback Coupon Engine",
+      level1Percentage: Number(level1Percentage) >= 0 ? Number(level1Percentage) : 10,
+      level2Percentage: Number(level2Percentage) >= 0 ? Number(level2Percentage) : 15,
+      level3Percentage: Number(level3Percentage) >= 0 ? Number(level3Percentage) : 20,
+      level1MinSpendNpr: Number(level1MinSpendNpr) >= 0 ? Number(level1MinSpendNpr) : 0,
+      level2MinSpendNpr: Number(level2MinSpendNpr) >= 0 ? Number(level2MinSpendNpr) : 1e3,
+      level3MinSpendNpr: Number(level3MinSpendNpr) >= 0 ? Number(level3MinSpendNpr) : 2500,
+      validityDays: Number(validityDays) > 0 ? Number(validityDays) : 30,
+      minOrderToApplyNpr: Number(minOrderToApplyNpr) >= 0 ? Number(minOrderToApplyNpr) : 200,
+      maxDiscountNpr: maxDiscountNpr ? Number(maxDiscountNpr) : 1e3,
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    data.auditLogs.push({
+      id: `audit_rule_${Date.now()}`,
+      action: "UPDATE_COUPON_RULE",
+      actorUserId: req.user.userId,
+      actorRole: "admin",
+      details: `Updated 3-level coupon rule: L1=${level1Percentage}%, L2=${level2Percentage}%, L3=${level3Percentage}%`,
+      entityType: "settings",
+      entityId: data.cashbackCouponRule.id,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+    return data.cashbackCouponRule;
+  });
+  res.json({
+    success: true,
+    message: "3-Level Cashback Coupon settings updated successfully",
+    rule: result
+  });
+});
+router8.get("/admin/list", authenticateToken, requireRole("admin"), (req, res) => {
+  const coupons = [...db.data.coupons || []];
+  coupons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const availableCount = coupons.filter((c) => c.status === "available").length;
+  const usedCount = coupons.filter((c) => c.status === "used").length;
+  const totalSavedNpr = coupons.reduce((sum, c) => sum + (c.discountAppliedNpr || 0), 0);
+  res.json({
+    success: true,
+    coupons,
+    rule: db.data.cashbackCouponRule,
+    stats: {
+      totalIssued: coupons.length,
+      availableCount,
+      usedCount,
+      totalSavedNpr
+    }
+  });
+});
+router8.post("/admin/create-custom", authenticateToken, requireRole("admin"), (req, res) => {
+  const {
+    targetUserId,
+    discountPercentage,
+    level,
+    minOrderAmountNpr,
+    maxDiscountNpr,
+    validityDays,
+    customCode
+  } = req.body;
+  if (!discountPercentage || Number(discountPercentage) <= 0) {
+    res.status(400).json({ success: false, error: "Valid discount percentage is required" });
+    return;
+  }
+  const result = db.transaction((data) => {
+    let targetUser = data.users.find((u) => u.id === targetUserId);
+    if (!targetUser && targetUserId !== "all") {
+      targetUser = data.users.find((u) => u.role === "customer");
+    }
+    const lvl = Number(level) === 1 || Number(level) === 2 || Number(level) === 3 ? Number(level) : 1;
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const code = customCode?.trim().toUpperCase() || `JKM-ADMIN-L${lvl}-${randomSuffix}`;
+    const now = /* @__PURE__ */ new Date();
+    const days = Number(validityDays) || 30;
+    const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1e3).toISOString();
+    const newCoupon = {
+      id: `cpn_custom_${Date.now()}`,
+      code,
+      userId: targetUser ? targetUser.id : targetUserId || "all",
+      userName: targetUser ? targetUser.name : "All Customers",
+      userMobile: targetUser ? targetUser.mobile : "All",
+      sourceOrderId: "admin_manual",
+      sourceOrderNumber: "ADMIN-PROMO",
+      level: lvl,
+      discountPercentage: Number(discountPercentage),
+      minOrderAmountNpr: Number(minOrderAmountNpr) || 200,
+      maxDiscountNpr: maxDiscountNpr ? Number(maxDiscountNpr) : 1e3,
+      status: "available",
+      expiresAt,
+      createdAt: now.toISOString()
+    };
+    data.coupons = data.coupons || [];
+    data.coupons.unshift(newCoupon);
+    if (targetUser) {
+      data.notifications.push({
+        id: `notif_cpn_${Date.now()}`,
+        recipientUserId: targetUser.id,
+        title: "Special Cashback Coupon Granted!",
+        message: `Admin granted you a special Level ${lvl} Cashback Coupon (${discountPercentage}% OFF)! Use code "${code}".`,
+        type: "cashback",
+        read: false,
+        createdAt: now.toISOString()
+      });
+    }
+    return newCoupon;
+  });
+  res.json({
+    success: true,
+    message: `Cashback Coupon ${result.code} created successfully`,
+    coupon: result
+  });
+});
+var couponRoutes_default = router8;
+
 // server.ts
 dotenv.config();
 var __filename = fileURLToPath(import.meta.url);
@@ -2603,6 +3032,7 @@ app.use("/api/wallets", walletRoutes_default);
 app.use("/api/admin", adminRoutes_default);
 app.use("/api/shops", shopRoutes_default);
 app.use("/api/notifications", notificationRoutes_default);
+app.use("/api/coupons", couponRoutes_default);
 app.get("/api/health", (req, res) => {
   res.json({
     status: "healthy",
