@@ -882,16 +882,15 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
   if (path.match(/^\/api\/products\/[^/]+\/configure-and-approve$/) && method === 'PUT') {
     const prodId = path.split('/')[3];
     const product = db.products.find(p => p.id === prodId);
-    if (product) {
-      product.status = 'approved';
-      product.finalSellingPriceNpr = body.finalSellingPriceNpr || product.proposedSellingPriceNpr;
-      product.commissionSettings = body.commissionSettings;
-      product.updatedAt = new Date().toISOString();
-      saveLocalDatabase(db);
-    }
+    if (!product) throw new Error(`Product with ID "${prodId}" not found`);
+    product.status = 'approved';
+    product.finalSellingPriceNpr = Number(body.finalSellingPriceNpr) || product.proposedSellingPriceNpr;
+    product.commissionSettings = body.commissionSettings;
+    product.updatedAt = new Date().toISOString();
+    saveLocalDatabase(db);
     return {
       success: true,
-      message: 'Product approved',
+      message: 'Product approved and commission settings configured successfully',
       product
     } as unknown as T;
   }

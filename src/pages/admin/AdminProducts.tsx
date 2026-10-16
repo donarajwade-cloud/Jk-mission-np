@@ -1,26 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductCommissionSettings } from '../../types/index.ts';
 import { api } from '../../services/api.ts';
-import { formatNPR, formatNepaliDate } from '../../utils/format.ts';
+import { formatNPR } from '../../utils/format.ts';
 import {
   ShoppingBag,
   CheckCircle,
-  XCircle,
   AlertTriangle,
   Sliders,
-  DollarSign,
-  ShieldCheck,
-  Percent,
-  Calculator,
-  Eye,
-  Check,
-  Ban,
   Award,
   Pencil,
-  Upload,
   X,
   Save,
-  Image as ImageIcon
+  Ban,
+  Calculator,
+  Loader2,
+  Check
 } from 'lucide-react';
 import { ImageUploadGallery } from '../../components/common/ImageUploadGallery.tsx';
 
@@ -50,6 +44,7 @@ export const AdminProducts: React.FC = () => {
   const [permittedExpensesNpr, setPermittedExpensesNpr] = useState<number>(20);
 
   const [saving, setSaving] = useState(false);
+  const [configModalError, setConfigModalError] = useState<string | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadProducts = async () => {
@@ -72,6 +67,7 @@ export const AdminProducts: React.FC = () => {
 
   const openConfigurator = (prod: Product) => {
     setSelectedProduct(prod);
+    setConfigModalError(null);
     const existing = prod.commissionSettings;
 
     setFinalSellingPriceNpr(prod.finalSellingPriceNpr || prod.proposedSellingPriceNpr);
@@ -91,97 +87,116 @@ export const AdminProducts: React.FC = () => {
       // Defaults based on margin
       const margin = (prod.proposedSellingPriceNpr || 500) - prod.costPriceNpr;
       setCustomerCashbackType('fixed');
-      setCustomerCashbackValue(Math.round(margin * 0.15));
+      setCustomerCashbackValue(Math.max(10, Math.round(margin * 0.15)));
       setReferralPoolType('fixed');
-      setReferralPoolValue(Math.round(margin * 0.35));
+      setReferralPoolValue(Math.max(20, Math.round(margin * 0.35)));
       setLevel1Percentage(50);
       setLevel2Percentage(30);
       setLevel3Percentage(20);
       setShopkeeperCommissionType('fixed');
-      setShopkeeperCommissionValue(Math.round(margin * 0.20));
-      setCompanyShareNpr(Math.round(margin * 0.20));
-      setPermittedExpensesNpr(Math.round(margin * 0.10));
+      setShopkeeperCommissionValue(Math.max(10, Math.round(margin * 0.20)));
+      setCompanyShareNpr(Math.max(10, Math.round(margin * 0.20)));
+      setPermittedExpensesNpr(Math.max(10, Math.round(margin * 0.10)));
     }
     setConfigModalOpen(true);
   };
 
   // Live calculation preview
   const costPrice = selectedProduct?.costPriceNpr || 0;
-  const sellingPrice = finalSellingPriceNpr;
+  const sellingPrice = Number(finalSellingPriceNpr) || 0;
   const grossMargin = sellingPrice - costPrice;
 
   // 1. Cashback preview
   const calcCashbackNpr = customerCashbackType === 'percentage'
-    ? Math.round((sellingPrice * customerCashbackValue) / 100)
-    : Math.round(customerCashbackValue);
+    ? Math.round((sellingPrice * (Number(customerCashbackValue) || 0)) / 100)
+    : Math.round(Number(customerCashbackValue) || 0);
 
   // 2. Referral Pool preview
   const calcReferralPoolNpr = referralPoolType === 'percentage'
-    ? Math.round((grossMargin * referralPoolValue) / 100)
-    : Math.round(referralPoolValue);
+    ? Math.round((grossMargin * (Number(referralPoolValue) || 0)) / 100)
+    : Math.round(Number(referralPoolValue) || 0);
 
-  const calcL1Npr = Math.round((calcReferralPoolNpr * level1Percentage) / 100);
-  const calcL2Npr = Math.round((calcReferralPoolNpr * level2Percentage) / 100);
-  const calcL3Npr = Math.round((calcReferralPoolNpr * level3Percentage) / 100);
+  const calcL1Npr = Math.round((calcReferralPoolNpr * (Number(level1Percentage) || 0)) / 100);
+  const calcL2Npr = Math.round((calcReferralPoolNpr * (Number(level2Percentage) || 0)) / 100);
+  const calcL3Npr = Math.round((calcReferralPoolNpr * (Number(level3Percentage) || 0)) / 100);
 
   // 3. Shopkeeper commission preview
   const calcShopkeeperCommNpr = shopkeeperCommissionType === 'percentage'
-    ? Math.round((sellingPrice * shopkeeperCommissionValue) / 100)
-    : Math.round(shopkeeperCommissionValue);
+    ? Math.round((sellingPrice * (Number(shopkeeperCommissionValue) || 0)) / 100)
+    : Math.round(Number(shopkeeperCommissionValue) || 0);
+
+  // 4. Expenses & Company Share
+  const numCompanyShare = Number(companyShareNpr) || 0;
+  const numPermittedExpenses = Number(permittedExpensesNpr) || 0;
 
   // Total Promised Distribution
   const totalPromisedDistributionNpr =
     calcCashbackNpr +
     calcReferralPoolNpr +
     calcShopkeeperCommNpr +
-    permittedExpensesNpr +
-    companyShareNpr;
+    numPermittedExpenses +
+    numCompanyShare;
 
-  const netCompanyProfitNpr = grossMargin - (totalPromisedDistributionNpr - companyShareNpr);
+  const netCompanyProfitNpr = grossMargin - (totalPromisedDistributionNpr - numCompanyShare);
 
   const isOverAllocated = totalPromisedDistributionNpr > grossMargin;
-  const isReferralOver100 = level1Percentage + level2Percentage + level3Percentage > 100;
+  const isReferralOver100 = (Number(level1Percentage) || 0) + (Number(level2Percentage) || 0) + (Number(level3Percentage) || 0) > 100;
   const isNegativeMargin = grossMargin < 0;
-  const isValidConfiguration = !isOverAllocated && !isReferralOver100 && !isNegativeMargin;
+  const isValidConfiguration = !isOverAllocated && !isReferralOver100 && !isNegativeMargin && sellingPrice > 0;
 
   const handleSaveCommissionAndApprove = async () => {
     if (!selectedProduct) return;
     if (!isValidConfiguration) {
-      alert('Cannot save: Promised distribution exceeds available margin or invalid settings.');
+      if (isNegativeMargin) {
+        setConfigModalError(`Selling price (NPR ${sellingPrice}) cannot be lower than cost price (NPR ${costPrice}).`);
+      } else if (isOverAllocated) {
+        setConfigModalError(`Total distribution (NPR ${totalPromisedDistributionNpr}) exceeds gross margin (NPR ${grossMargin}) by NPR ${totalPromisedDistributionNpr - grossMargin}. Adjust your figures.`);
+      } else if (isReferralOver100) {
+        setConfigModalError(`Referral tier percentages total ${Number(level1Percentage) + Number(level2Percentage) + Number(level3Percentage)}%, which exceeds 100%.`);
+      } else {
+        setConfigModalError('Please check your price and commission values before saving.');
+      }
       return;
     }
 
     setSaving(true);
-    setFeedbackMsg(null);
+    setConfigModalError(null);
 
     const commissionSettings: ProductCommissionSettings = {
       customerCashbackType,
-      customerCashbackValue,
+      customerCashbackValue: Number(customerCashbackValue) || 0,
       referralPoolType,
-      referralPoolValue,
-      level1Percentage,
-      level2Percentage,
-      level3Percentage,
+      referralPoolValue: Number(referralPoolValue) || 0,
+      level1Percentage: Number(level1Percentage) || 0,
+      level2Percentage: Number(level2Percentage) || 0,
+      level3Percentage: Number(level3Percentage) || 0,
       shopkeeperCommissionType,
-      shopkeeperCommissionValue,
-      companyShareNpr,
-      permittedExpensesNpr
+      shopkeeperCommissionValue: Number(shopkeeperCommissionValue) || 0,
+      companyShareNpr: numCompanyShare,
+      permittedExpensesNpr: numPermittedExpenses
     };
 
     try {
       const res = await api.configureAndApproveProduct(selectedProduct.id, {
-        finalSellingPriceNpr,
+        finalSellingPriceNpr: sellingPrice,
         commissionSettings
       });
 
       if (res.success) {
-        setFeedbackMsg({ type: 'success', text: `Product "${selectedProduct.name}" approved and commissions configured successfully!` });
+        setFeedbackMsg({
+          type: 'success',
+          text: `Product "${selectedProduct.name}" approved with selling price NPR ${sellingPrice} and commissions saved!`
+        });
         setConfigModalOpen(false);
-        // Refresh product in state
-        setProducts(prev => prev.map(p => p.id === selectedProduct.id ? { ...p, status: 'approved', finalSellingPriceNpr, commissionSettings } : p));
+        // Refresh product in state and reload
+        setProducts(prev => prev.map(p => p.id === selectedProduct.id ? { ...p, status: 'approved', finalSellingPriceNpr: sellingPrice, commissionSettings } : p));
+        await loadProducts();
+        setTimeout(() => setFeedbackMsg(null), 5000);
+      } else {
+        setConfigModalError((res as any).error || 'Failed to save commission settings');
       }
     } catch (err: any) {
-      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to approve product' });
+      setConfigModalError(err.message || 'Failed to save product settings');
     } finally {
       setSaving(false);
     }
@@ -196,6 +211,7 @@ export const AdminProducts: React.FC = () => {
         setRejectModalOpen(false);
         setRejectReason('');
         setProducts(prev => prev.map(p => p.id === selectedProduct.id ? { ...p, status: 'rejected' } : p));
+        await loadProducts();
       }
     } catch (err: any) {
       alert(err.message || 'Reject failed');
@@ -207,6 +223,7 @@ export const AdminProducts: React.FC = () => {
       const res = await api.toggleProductStatus(prodId);
       if (res.success) {
         setProducts(prev => prev.map(p => p.id === prodId ? res.product : p));
+        await loadProducts();
       }
     } catch (err: any) {
       alert(err.message || 'Toggle failed');
@@ -251,12 +268,15 @@ export const AdminProducts: React.FC = () => {
       setEditError('Product name is required');
       return;
     }
-    if (editCostPriceNpr <= 0 || editSellingPriceNpr <= 0) {
-      setEditError('Cost price and selling price must be greater than 0');
+    const cost = Number(editCostPriceNpr);
+    const selling = Number(editSellingPriceNpr);
+
+    if (isNaN(cost) || cost <= 0 || isNaN(selling) || selling <= 0) {
+      setEditError('Cost price and selling price must be positive numbers');
       return;
     }
-    if (editSellingPriceNpr < editCostPriceNpr) {
-      setEditError('Selling price cannot be less than cost price');
+    if (selling < cost) {
+      setEditError(`Selling price (NPR ${selling}) cannot be less than cost price (NPR ${cost})`);
       return;
     }
     if (!editImageUrl.trim()) {
@@ -271,20 +291,25 @@ export const AdminProducts: React.FC = () => {
         name: editName.trim(),
         category: editCategory.trim(),
         description: editDescription.trim(),
-        costPriceNpr: Number(editCostPriceNpr),
-        proposedSellingPriceNpr: Number(editSellingPriceNpr),
-        finalSellingPriceNpr: Number(editSellingPriceNpr),
-        stockQuantity: Math.max(0, Number(editStockQuantity)),
+        costPriceNpr: cost,
+        proposedSellingPriceNpr: selling,
+        finalSellingPriceNpr: selling,
+        stockQuantity: Math.max(0, Number(editStockQuantity) || 0),
         sku: editSku.trim(),
         imageUrl: editImageUrl.trim(),
         galleryImages: editGalleryImages
       });
 
-      if (res.success && res.product) {
-        setProducts(prev => prev.map(p => p.id === editingProduct.id ? res.product : p));
-        setFeedbackMsg({ type: 'success', text: `Product "${res.product.name}" and photos updated successfully!` });
+      if (res.success) {
+        setFeedbackMsg({
+          type: 'success',
+          text: `Product "${editName.trim()}" and photos updated successfully!`
+        });
         setEditModalOpen(false);
-        setTimeout(() => setFeedbackMsg(null), 4000);
+        await loadProducts();
+        setTimeout(() => setFeedbackMsg(null), 5000);
+      } else {
+        setEditError((res as any).error || 'Failed to update product');
       }
     } catch (err: any) {
       setEditError(err.message || 'Failed to update product');
@@ -311,23 +336,23 @@ export const AdminProducts: React.FC = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
       {/* Title & Filter Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
             Critical Financial Oversight
           </span>
-          <h1 className="text-3xl font-black text-slate-950 mt-0.5">
-            Product Approvals & Commission Settings
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 mt-0.5">
+            Admin Product Catalog & Commissions
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Shopkeeper commissions are NOT fixed globally. Every single product has its own custom cashback, 3-level referral pool, and merchant commission configured here.
+            Edit product specifications, upload photos, and configure 3-level commissions, cashbacks, and merchant shares.
           </p>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200 self-start sm:self-auto text-xs font-bold">
+        {/* Status Filters */}
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl text-xs font-bold self-start sm:self-auto">
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1.5 rounded-xl transition-all ${
@@ -378,9 +403,9 @@ export const AdminProducts: React.FC = () => {
 
       {/* Alert banner if products are waiting */}
       {pendingCount > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-center justify-between text-xs text-amber-900 shadow-xs">
-          <div className="flex items-center space-x-2.5">
-            <ShoppingBag className="w-5 h-5 text-amber-600 shrink-0 animate-pulse" />
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-xs">
+          <div className="flex items-start sm:items-center space-x-2.5">
+            <ShoppingBag className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0 animate-pulse" />
             <span>
               <strong>{pendingCount} Product Submission{pendingCount > 1 ? 's' : ''} Awaiting Review: </strong>
               Please configure product selling price, cashback, referral pool, and merchant commission before making them live.
@@ -389,7 +414,7 @@ export const AdminProducts: React.FC = () => {
           {statusFilter !== 'pending_approval' && (
             <button
               onClick={() => setStatusFilter('pending_approval')}
-              className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold shrink-0 ml-2"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold shrink-0 self-start sm:self-auto"
             >
               Show Pending
             </button>
@@ -401,61 +426,65 @@ export const AdminProducts: React.FC = () => {
         <div className={`p-4 rounded-2xl text-xs font-bold flex items-center space-x-2 ${
           feedbackMsg.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-red-50 border border-red-200 text-red-700'
         }`}>
-          {feedbackMsg.type === 'success' ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-red-600" />}
+          {feedbackMsg.type === 'success' ? <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />}
           <span>{feedbackMsg.text}</span>
         </div>
       )}
 
-      {/* Products Table */}
+      {/* Products Table (Desktop) / Cards (Mobile) */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">Loading catalog items...</div>
+          <div className="p-12 text-center text-xs text-slate-500 flex flex-col items-center justify-center space-y-2">
+            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+            <span>Loading catalog items...</span>
+          </div>
         ) : filteredProducts.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-xs">
             No products found matching filter &quot;{statusFilter}&quot;.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
                 <tr>
-                  <th className="py-3 px-4">Product & Shop</th>
-                  <th className="py-3 px-4 text-right">Cost Price</th>
-                  <th className="py-3 px-4 text-right">Selling Price</th>
-                  <th className="py-3 px-4 text-right">Gross Margin</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Approved Commissions</th>
-                  <th className="py-3 px-4 text-center">Actions</th>
+                  <th className="py-3.5 px-4">Product & Shop</th>
+                  <th className="py-3.5 px-4 text-right">Cost Price</th>
+                  <th className="py-3.5 px-4 text-right">Selling Price</th>
+                  <th className="py-3.5 px-4 text-right">Gross Margin</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Approved Commissions</th>
+                  <th className="py-3.5 px-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredProducts.map((p) => {
-                  const margin = p.finalSellingPriceNpr - p.costPriceNpr;
+                  const margin = (p.finalSellingPriceNpr || p.proposedSellingPriceNpr) - p.costPriceNpr;
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50/50">
+                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-3">
                           <img
                             src={p.imageUrl}
                             alt={p.name}
-                            className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-50"
                           />
-                          <div>
-                            <p className="font-bold text-slate-900">{p.name}</p>
-                            <span className="text-[10px] text-amber-700 font-semibold">{p.shopName}</span>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 truncate max-w-xs">{p.name}</p>
+                            <span className="text-[10px] text-amber-700 font-semibold block">{p.shopName}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">Stock: {p.stockQuantity}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right font-medium text-slate-600">
+                      <td className="py-3 px-4 text-right font-medium text-slate-600 font-mono">
                         {formatNPR(p.costPriceNpr)}
                       </td>
-                      <td className="py-3 px-4 text-right font-black text-slate-900">
+                      <td className="py-3 px-4 text-right font-black text-slate-900 font-mono">
                         {formatNPR(p.finalSellingPriceNpr || p.proposedSellingPriceNpr)}
                       </td>
-                      <td className="py-3 px-4 text-right font-bold text-emerald-700">
+                      <td className="py-3 px-4 text-right font-bold text-emerald-700 font-mono">
                         {formatNPR(margin)}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           p.status === 'approved'
                             ? 'bg-emerald-100 text-emerald-800'
@@ -476,10 +505,10 @@ export const AdminProducts: React.FC = () => {
                             <p>Shopkeeper: <strong className="text-blue-700">{formatNPR(p.commissionSettings.shopkeeperCommissionValue)}</strong></p>
                           </div>
                         ) : (
-                          <span className="text-amber-700 font-semibold italic">Requires commission configuration</span>
+                          <span className="text-amber-700 font-semibold italic text-[11px]">Requires configuration</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3 px-4 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center space-x-1.5">
                           <button
                             onClick={() => openEditModal(p)}
@@ -505,7 +534,7 @@ export const AdminProducts: React.FC = () => {
                                 setSelectedProduct(p);
                                 setRejectModalOpen(true);
                               }}
-                              className="px-2.5 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs"
+                              className="px-2.5 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs transition-colors"
                               title="Reject Product"
                             >
                               Reject
@@ -515,7 +544,7 @@ export const AdminProducts: React.FC = () => {
                           {p.status !== 'pending_approval' && (
                             <button
                               onClick={() => handleToggleStatus(p.id)}
-                              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"
+                              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                               title={p.status === 'approved' ? 'Disable Product' : 'Enable Product'}
                             >
                               <Ban className="w-3.5 h-3.5" />
@@ -532,31 +561,42 @@ export const AdminProducts: React.FC = () => {
         )}
       </div>
 
-      {/* Commission Configuration & Validation Modal */}
+      {/* FULL-SCREEN RESPONSIVE COMMISSION CONFIGURATION & VALIDATION MODAL */}
       {configModalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
-            <div className="p-6 border-b border-slate-100 bg-amber-50/70 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto">
+          <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-3xl bg-white sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-200 flex flex-col overflow-hidden">
+            {/* Header (Sticky) */}
+            <div className="shrink-0 p-4 sm:p-6 border-b border-slate-100 bg-amber-50/80 flex items-center justify-between sticky top-0 z-10">
+              <div className="min-w-0 pr-3">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded">
                   Admin Commission Engine
                 </span>
-                <h3 className="font-black text-slate-950 text-lg mt-1">
-                  Configure Commissions: {selectedProduct.name}
+                <h3 className="font-black text-slate-950 text-base sm:text-lg mt-1 truncate">
+                  {selectedProduct.name}
                 </h3>
-                <p className="text-xs text-slate-500">Merchant: {selectedProduct.shopName}</p>
+                <p className="text-xs text-slate-500 truncate">Merchant: {selectedProduct.shopName}</p>
               </div>
               <button
+                type="button"
                 onClick={() => setConfigModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 font-bold text-lg"
+                className="w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-600 flex items-center justify-center text-lg font-bold border border-slate-200 shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6 space-y-6 text-xs max-h-[75vh] overflow-y-auto">
+            {/* Error Message if any */}
+            {configModalError && (
+              <div className="mx-4 sm:mx-6 mt-4 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{configModalError}</span>
+              </div>
+            )}
+
+            {/* Scrollable Form Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
               {/* Cost & Selling Price Overview */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <span className="text-slate-500 text-[11px] block">Merchant Cost Price:</span>
                   <strong className="text-base text-slate-900 font-mono">{formatNPR(costPrice)}</strong>
@@ -570,27 +610,27 @@ export const AdminProducts: React.FC = () => {
                     min={costPrice}
                     value={finalSellingPriceNpr}
                     onChange={(e) => setFinalSellingPriceNpr(Number(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 font-bold text-sm bg-white focus:outline-none focus:border-amber-400"
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-300 font-bold text-sm bg-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
                 <div>
                   <span className="text-slate-500 text-[11px] block">Available Gross Margin:</span>
-                  <strong className={`text-base font-black ${grossMargin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <strong className={`text-base font-black font-mono ${grossMargin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {formatNPR(grossMargin)}
                   </strong>
                 </div>
               </div>
 
               {/* Commission Distribution Form */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* 1. Customer Cashback */}
-                <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-white">
+                <div className="p-4 rounded-2xl border border-slate-200 space-y-2.5 bg-white shadow-2xs">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-slate-900 flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-emerald-600" />
                       <span>1. Customer Cashback</span>
                     </span>
-                    <span className="font-bold text-emerald-700 text-xs">
+                    <span className="font-bold text-emerald-700 text-xs font-mono">
                       = {formatNPR(calcCashbackNpr)}
                     </span>
                   </div>
@@ -598,7 +638,7 @@ export const AdminProducts: React.FC = () => {
                     <select
                       value={customerCashbackType}
                       onChange={(e) => setCustomerCashbackType(e.target.value as any)}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold"
+                      className="px-2.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-bold"
                     >
                       <option value="fixed">Fixed NPR</option>
                       <option value="percentage">% of Price</option>
@@ -608,20 +648,20 @@ export const AdminProducts: React.FC = () => {
                       min="0"
                       value={customerCashbackValue}
                       onChange={(e) => setCustomerCashbackValue(Number(e.target.value) || 0)}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
                       placeholder="Value"
                     />
                   </div>
                 </div>
 
                 {/* 2. Shopkeeper Commission */}
-                <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-white">
+                <div className="p-4 rounded-2xl border border-slate-200 space-y-2.5 bg-white shadow-2xs">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-slate-900 flex items-center gap-1.5">
                       <ShoppingBag className="w-4 h-4 text-blue-600" />
                       <span>2. Shopkeeper Commission</span>
                     </span>
-                    <span className="font-bold text-blue-700 text-xs">
+                    <span className="font-bold text-blue-700 text-xs font-mono">
                       = {formatNPR(calcShopkeeperCommNpr)}
                     </span>
                   </div>
@@ -629,7 +669,7 @@ export const AdminProducts: React.FC = () => {
                     <select
                       value={shopkeeperCommissionType}
                       onChange={(e) => setShopkeeperCommissionType(e.target.value as any)}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold"
+                      className="px-2.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-bold"
                     >
                       <option value="fixed">Fixed NPR</option>
                       <option value="percentage">% of Price</option>
@@ -639,20 +679,20 @@ export const AdminProducts: React.FC = () => {
                       min="0"
                       value={shopkeeperCommissionValue}
                       onChange={(e) => setShopkeeperCommissionValue(Number(e.target.value) || 0)}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
                       placeholder="Value"
                     />
                   </div>
                 </div>
 
                 {/* 3. Referral Commission Pool & 3 Levels */}
-                <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-white md:col-span-2">
+                <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-white md:col-span-2 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-slate-900 flex items-center gap-1.5">
                       <Calculator className="w-4 h-4 text-purple-600" />
-                      <span>3. Referral Commission Pool Base & 3 Levels</span>
+                      <span>3. Referral Commission Pool & 3 Levels</span>
                     </span>
-                    <span className="font-bold text-purple-700 text-xs">
+                    <span className="font-bold text-purple-700 text-xs font-mono">
                       Pool Total = {formatNPR(calcReferralPoolNpr)}
                     </span>
                   </div>
@@ -661,7 +701,7 @@ export const AdminProducts: React.FC = () => {
                     <select
                       value={referralPoolType}
                       onChange={(e) => setReferralPoolType(e.target.value as any)}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold"
+                      className="px-2.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-bold"
                     >
                       <option value="fixed">Fixed NPR</option>
                       <option value="percentage">% of Margin</option>
@@ -671,17 +711,17 @@ export const AdminProducts: React.FC = () => {
                       min="0"
                       value={referralPoolValue}
                       onChange={(e) => setReferralPoolValue(Number(e.target.value) || 0)}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
                       placeholder="Pool Value"
                     />
                   </div>
 
                   <p className="text-[11px] text-slate-500">
-                    Distribution of Referral Pool across 3 Levels (Must not exceed 100%):
+                    Distribution of Referral Pool across 3 Levels (Must not exceed 100% total):
                   </p>
 
-                  <div className="grid grid-cols-3 gap-3 pt-1">
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                       <span className="font-bold text-slate-700 block mb-1">Level 1 Direct (%)</span>
                       <input
                         type="number"
@@ -689,14 +729,14 @@ export const AdminProducts: React.FC = () => {
                         max="100"
                         value={level1Percentage}
                         onChange={(e) => setLevel1Percentage(Number(e.target.value) || 0)}
-                        className="w-full px-2 py-1 rounded border border-slate-300 font-bold bg-white"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-bold bg-white"
                       />
-                      <span className="text-[10px] text-purple-700 font-bold block mt-1">
+                      <span className="text-[10px] text-purple-700 font-bold block mt-1 font-mono">
                         = {formatNPR(calcL1Npr)}
                       </span>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                       <span className="font-bold text-slate-700 block mb-1">Level 2 Tier 2 (%)</span>
                       <input
                         type="number"
@@ -704,14 +744,14 @@ export const AdminProducts: React.FC = () => {
                         max="100"
                         value={level2Percentage}
                         onChange={(e) => setLevel2Percentage(Number(e.target.value) || 0)}
-                        className="w-full px-2 py-1 rounded border border-slate-300 font-bold bg-white"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-bold bg-white"
                       />
-                      <span className="text-[10px] text-purple-700 font-bold block mt-1">
+                      <span className="text-[10px] text-purple-700 font-bold block mt-1 font-mono">
                         = {formatNPR(calcL2Npr)}
                       </span>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                       <span className="font-bold text-slate-700 block mb-1">Level 3 Tier 3 (%)</span>
                       <input
                         type="number"
@@ -719,96 +759,120 @@ export const AdminProducts: React.FC = () => {
                         max="100"
                         value={level3Percentage}
                         onChange={(e) => setLevel3Percentage(Number(e.target.value) || 0)}
-                        className="w-full px-2 py-1 rounded border border-slate-300 font-bold bg-white"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-bold bg-white"
                       />
-                      <span className="text-[10px] text-purple-700 font-bold block mt-1">
+                      <span className="text-[10px] text-purple-700 font-bold block mt-1 font-mono">
                         = {formatNPR(calcL3Npr)}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* 4. Company Share & Expenses */}
-                <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-white">
+                {/* 4. Company Share */}
+                <div className="p-4 rounded-2xl border border-slate-200 space-y-2 bg-white shadow-2xs">
                   <span className="font-extrabold text-slate-900 block">4. Company Share (NPR)</span>
                   <input
                     type="number"
                     min="0"
                     value={companyShareNpr}
                     onChange={(e) => setCompanyShareNpr(Number(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
                   />
                   <p className="text-[10px] text-slate-400">Retained revenue for operational growth</p>
                 </div>
 
-                <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-white">
+                {/* 5. Permitted Expenses */}
+                <div className="p-4 rounded-2xl border border-slate-200 space-y-2 bg-white shadow-2xs">
                   <span className="font-extrabold text-slate-900 block">5. Permitted Expenses (NPR)</span>
                   <input
                     type="number"
                     min="0"
                     value={permittedExpensesNpr}
                     onChange={(e) => setPermittedExpensesNpr(Number(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:outline-none focus:border-amber-400"
                   />
                   <p className="text-[10px] text-slate-400">Payment gateway fees, packaging, handling</p>
                 </div>
               </div>
 
-              {/* LIVE CALCULATION & MARGIN AUDIT PREVIEW */}
-              <div className={`p-5 rounded-2xl border space-y-3 ${
-                isValidConfiguration ? 'bg-emerald-50/50 border-emerald-300 text-emerald-950' : 'bg-red-50 border-red-300 text-red-950'
+              {/* CLEAN LIVE CALCULATION & MARGIN AUDIT PREVIEW (FIXED MOBILE ALIGNMENT) */}
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
+                isValidConfiguration ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950' : 'bg-red-50 border-red-300 text-red-950'
               }`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-black text-sm uppercase tracking-wide flex items-center gap-1.5">
-                    {isValidConfiguration ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-red-600" />}
-                    <span>Financial Distribution Audit & Margin Check</span>
+                {/* Header row - stacks cleanly on mobile */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 pb-1 border-b border-emerald-200/50">
+                  <span className="font-black text-xs sm:text-sm uppercase tracking-wide flex items-center gap-1.5">
+                    {isValidConfiguration ? <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />}
+                    <span>Financial Distribution Audit</span>
                   </span>
-                  <span className="font-black text-sm font-mono">
-                    {totalPromisedDistributionNpr} / {grossMargin} NPR
-                  </span>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[10px] font-bold text-slate-500">Allocated / Margin:</span>
+                    <span className="font-black text-xs sm:text-sm font-mono px-2 py-0.5 rounded-lg bg-white border border-slate-200">
+                      {totalPromisedDistributionNpr} / {grossMargin} NPR
+                    </span>
+                  </div>
                 </div>
 
+                {/* 4 Stat Items Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] pt-1">
-                  <div>Cashback: <strong>{formatNPR(calcCashbackNpr)}</strong></div>
-                  <div>Referral Pool: <strong>{formatNPR(calcReferralPoolNpr)}</strong></div>
-                  <div>Shopkeeper Comm: <strong>{formatNPR(calcShopkeeperCommNpr)}</strong></div>
-                  <div>Expenses + Company: <strong>{formatNPR(permittedExpensesNpr + companyShareNpr)}</strong></div>
+                  <div className="p-2 rounded-xl bg-white/70 border border-slate-100">
+                    <span className="text-slate-500 block text-[10px]">Cashback:</span>
+                    <strong className="text-emerald-700 font-mono text-xs">{formatNPR(calcCashbackNpr)}</strong>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/70 border border-slate-100">
+                    <span className="text-slate-500 block text-[10px]">Referral Pool:</span>
+                    <strong className="text-purple-700 font-mono text-xs">{formatNPR(calcReferralPoolNpr)}</strong>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/70 border border-slate-100">
+                    <span className="text-slate-500 block text-[10px]">Shopkeeper:</span>
+                    <strong className="text-blue-700 font-mono text-xs">{formatNPR(calcShopkeeperCommNpr)}</strong>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/70 border border-slate-100">
+                    <span className="text-slate-500 block text-[10px]">Expenses + Co:</span>
+                    <strong className="text-slate-800 font-mono text-xs">{formatNPR(numPermittedExpenses + numCompanyShare)}</strong>
+                  </div>
                 </div>
 
-                <div className="border-t border-slate-200/60 pt-2 flex justify-between items-center text-xs">
+                {/* Validation Status & Net Margin */}
+                <div className="border-t border-slate-200/60 pt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs">
                   <div>
                     {isOverAllocated && (
-                      <p className="text-red-700 font-bold">
-                        ❌ REJECTED: Total promised distribution (NPR {totalPromisedDistributionNpr}) exceeds available margin (NPR {grossMargin}) by NPR {totalPromisedDistributionNpr - grossMargin}!
+                      <p className="text-red-700 font-bold flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>Exceeds margin by NPR {totalPromisedDistributionNpr - grossMargin}!</span>
                       </p>
                     )}
                     {isReferralOver100 && (
-                      <p className="text-red-700 font-bold">
-                        ❌ REJECTED: Referral tier percentages total {level1Percentage + level2Percentage + level3Percentage}%, exceeding 100%!
+                      <p className="text-red-700 font-bold flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>Referral tiers total {Number(level1Percentage) + Number(level2Percentage) + Number(level3Percentage)}% (&gt; 100%)!</span>
                       </p>
                     )}
                     {isValidConfiguration && (
-                      <p className="text-emerald-800 font-bold">
-                        ✓ Balanced: Distribution fits within margin. Unallocated company safety buffer: NPR {grossMargin - totalPromisedDistributionNpr}.
+                      <p className="text-emerald-800 font-bold flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                        <span>Balanced: Distribution fits within margin (Buffer: NPR {grossMargin - totalPromisedDistributionNpr})</span>
                       </p>
                     )}
                   </div>
-                  <div className="text-right font-black text-sm">
-                    Net Margin: {formatNPR(grossMargin - totalPromisedDistributionNpr + companyShareNpr)}
+                  <div className="text-left sm:text-right font-black text-xs sm:text-sm bg-white/80 p-2 sm:p-0 rounded-xl">
+                    <span className="text-slate-500 font-normal">Net Profit: </span>
+                    <span className="text-emerald-800 font-mono">{formatNPR(grossMargin - totalPromisedDistributionNpr + numCompanyShare)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-              <span className="text-[11px] text-slate-500">
-                Changes apply only to future sales. Past sales retain their immutable snapshots.
+            {/* STICKY BOTTOM ACTION BAR (RESPONSIVE FOR ALL SCREEN SIZES) */}
+            <div className="shrink-0 p-3.5 sm:p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky bottom-0 z-20">
+              <span className="text-[11px] text-slate-500 text-center sm:text-left order-2 sm:order-1">
+                Changes apply to future sales. Past sales retain immutable ledger snapshots.
               </span>
-              <div className="flex space-x-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto order-1 sm:order-2">
                 <button
                   type="button"
                   onClick={() => setConfigModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-200 font-bold text-xs"
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
                 >
                   Cancel
                 </button>
@@ -816,9 +880,19 @@ export const AdminProducts: React.FC = () => {
                   type="button"
                   onClick={handleSaveCommissionAndApprove}
                   disabled={saving || !isValidConfiguration}
-                  className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-md transition-all disabled:opacity-40"
+                  className="flex-2 sm:flex-none px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-md transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
                 >
-                  {saving ? 'Validating & Saving...' : 'Approve & Save Financial Settings'}
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 text-slate-950" />
+                      <span>Save & Approve Settings</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -826,160 +900,173 @@ export const AdminProducts: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Product & Photo Upload Modal */}
+      {/* FULL-SCREEN RESPONSIVE PRODUCT EDIT & PHOTO UPLOAD MODAL */}
       {editModalOpen && editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 my-8 animate-in fade-in duration-200">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto">
+          <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl bg-white sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-200 flex flex-col overflow-hidden">
+            {/* Header (Sticky) */}
+            <div className="shrink-0 p-4 sm:p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between sticky top-0 z-10">
+              <div className="min-w-0 pr-3">
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">
                   Admin Product Editor
                 </span>
-                <h3 className="text-xl font-black text-slate-950">
+                <h3 className="text-lg sm:text-xl font-black text-slate-950 truncate">
                   Edit Product &amp; Photos
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 truncate">
                   Shop: {editingProduct.shopName} • ID: {editingProduct.id}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center text-lg font-bold border border-slate-200 shrink-0"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
+            {/* Error Banner */}
             {editError && (
-              <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center space-x-1.5">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
+              <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center space-x-1.5">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
                 <span>{editError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveProductEdit} className="space-y-5 text-xs">
-              {/* Product Photos & Gallery Uploader */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <ImageUploadGallery
-                  primaryImage={editImageUrl}
-                  onChangePrimaryImage={setEditImageUrl}
-                  galleryImages={editGalleryImages}
-                  onChangeGalleryImages={setEditGalleryImages}
-                  label="Product Photos & Gallery"
-                  helpText="Upload product photos directly from your computer / phone gallery, or enter an image URL."
-                />
-              </div>
-
-              {/* Basic Fields */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-800 mb-1">Product Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Product Title"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-400"
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleSaveProductEdit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs flex flex-col justify-between">
+              <div className="space-y-5">
+                {/* Product Photos & Gallery Uploader */}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <ImageUploadGallery
+                    primaryImage={editImageUrl}
+                    onChangePrimaryImage={setEditImageUrl}
+                    galleryImages={editGalleryImages}
+                    onChangeGalleryImages={setEditGalleryImages}
+                    label="Product Photos & Gallery"
+                    helpText="Upload product photos directly from your computer / phone gallery, or enter an image URL."
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-slate-800 mb-1">Category</label>
-                  <input
-                    type="text"
-                    required
-                    value={editCategory}
-                    onChange={(e) => setEditCategory(e.target.value)}
-                    placeholder="e.g. Organic & Food, Handicrafts, Fashion"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
-                  />
-                </div>
+                {/* Basic Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block font-bold text-slate-800 mb-1">Product Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Product Title"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block font-bold text-slate-800 mb-1">SKU Code</label>
-                  <input
-                    type="text"
-                    value={editSku}
-                    onChange={(e) => setEditSku(e.target.value)}
-                    placeholder="SKU-XXXXXX"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
-                  />
-                </div>
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Category</label>
+                    <input
+                      type="text"
+                      required
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      placeholder="e.g. Organic & Food, Handicrafts"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block font-bold text-slate-800 mb-1">Merchant Cost Price (NPR)</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={editCostPriceNpr}
-                    onChange={(e) => setEditCostPriceNpr(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
-                  />
-                </div>
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">SKU Code</label>
+                    <input
+                      type="text"
+                      value={editSku}
+                      onChange={(e) => setEditSku(e.target.value)}
+                      placeholder="SKU-XXXXXX"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block font-bold text-slate-800 mb-1">Final Selling Price (NPR)</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={editSellingPriceNpr}
-                    onChange={(e) => setEditSellingPriceNpr(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-amber-700 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Merchant Cost Price (NPR)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={editCostPriceNpr}
+                      onChange={(e) => setEditCostPriceNpr(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block font-bold text-slate-800 mb-1">Available Stock Units</label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    value={editStockQuantity}
-                    onChange={(e) => setEditStockQuantity(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
-                  />
-                </div>
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Final Selling Price (NPR)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={editSellingPriceNpr}
+                      onChange={(e) => setEditSellingPriceNpr(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-amber-700 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block font-bold text-slate-800 mb-1">Gross Margin (NPR)</label>
-                  <div className="w-full px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-black text-emerald-700">
-                    {formatNPR(editSellingPriceNpr - editCostPriceNpr)}
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Available Stock Units</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={editStockQuantity}
+                      onChange={(e) => setEditStockQuantity(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Gross Margin (NPR)</label>
+                    <div className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-black text-emerald-700 font-mono">
+                      {formatNPR(editSellingPriceNpr - editCostPriceNpr)}
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block font-bold text-slate-800 mb-1">Product Description</label>
+                    <textarea
+                      rows={3}
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="Detailed specifications, features, origin..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
+                    />
                   </div>
                 </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-800 mb-1">Product Description</label>
-                  <textarea
-                    rows={3}
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    placeholder="Detailed specifications, features, origin..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
-                  />
-                </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+              {/* Actions Footer (Sticky) */}
+              <div className="shrink-0 pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editSaving}
-                  className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-50"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{editSaving ? 'Saving Changes...' : 'Save Product & Photos'}</span>
+                  {editSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 text-slate-950" />
+                      <span>Save Product & Photos</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -989,7 +1076,7 @@ export const AdminProducts: React.FC = () => {
 
       {/* Reject Modal */}
       {rejectModalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-xl border border-slate-200 space-y-4 text-xs">
             <h3 className="font-extrabold text-slate-900 text-base">Reject Product Submission</h3>
             <p className="text-slate-500">Provide feedback reason to {selectedProduct.shopName}:</p>
@@ -1003,7 +1090,7 @@ export const AdminProducts: React.FC = () => {
             <div className="flex justify-end space-x-2 pt-2">
               <button
                 onClick={() => setRejectModalOpen(false)}
-                className="px-3 py-1.5 rounded-xl text-slate-600 font-bold"
+                className="px-3.5 py-2 rounded-xl text-slate-600 font-bold hover:bg-slate-100"
               >
                 Cancel
               </button>
