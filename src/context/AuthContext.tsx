@@ -19,7 +19,7 @@ interface AuthContextType {
   cartTotalNpr: number;
   notifications: AppNotification[];
   unreadNotifications: number;
-  login: (identifier: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  login: (identifier: string, pass: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   registerCustomer: (payload: { name: string; mobile: string; password: string; sponsorReferralMobile?: string; termsAccepted: boolean }) => Promise<{ success: boolean; error?: string }>;
   registerShopkeeper: (payload: { fullName: string; mobile: string; password: string; shopName: string; shopAddress: string; district: string; municipality: string; panOrVatNumber?: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -118,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(res.user);
         await refreshUser();
         await refreshNotifications();
-        return { success: true };
+        return { success: true, user: res.user };
       }
       return { success: false, error: 'Login failed' };
     } catch (err: any) {

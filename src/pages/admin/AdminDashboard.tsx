@@ -46,7 +46,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+      <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-16 text-center">
         <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-xs text-slate-500 font-bold">Computing real database financials...</p>
       </div>

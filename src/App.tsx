@@ -24,48 +24,48 @@ import { CheckoutPage } from './pages/public/CheckoutPage.tsx';
 import { PolicyPages } from './pages/public/PolicyPages.tsx';
 import { ContactPage } from './pages/public/ContactPage.tsx';
 
-// Customer pages
-import { CustomerDashboard } from './pages/customer/CustomerDashboard.tsx';
-import { CustomerWallets } from './pages/customer/CustomerWallets.tsx';
-import { CustomerReferrals } from './pages/customer/CustomerReferrals.tsx';
-import { CustomerOrders } from './pages/customer/CustomerOrders.tsx';
-import { CustomerWithdrawals } from './pages/customer/CustomerWithdrawals.tsx';
-import { CustomerCoupons } from './pages/customer/CustomerCoupons.tsx';
-
-// Shopkeeper pages
-import { ShopkeeperDashboard } from './pages/shopkeeper/ShopkeeperDashboard.tsx';
-import { ShopkeeperProducts } from './pages/shopkeeper/ShopkeeperProducts.tsx';
-import { ShopkeeperInventory } from './pages/shopkeeper/ShopkeeperInventory.tsx';
-import { ShopkeeperOrders } from './pages/shopkeeper/ShopkeeperOrders.tsx';
-import { ShopkeeperWallet } from './pages/shopkeeper/ShopkeeperWallet.tsx';
-
-// Admin pages
-import { AdminDashboard } from './pages/admin/AdminDashboard.tsx';
-import { AdminProducts } from './pages/admin/AdminProducts.tsx';
-import { AdminCustomers } from './pages/admin/AdminCustomers.tsx';
-import { AdminShopkeepers } from './pages/admin/AdminShopkeepers.tsx';
-import { AdminOrders } from './pages/admin/AdminOrders.tsx';
-import { AdminWithdrawals } from './pages/admin/AdminWithdrawals.tsx';
-import { AdminLedgers } from './pages/admin/AdminLedgers.tsx';
-import { AdminSettings } from './pages/admin/AdminSettings.tsx';
-import { AdminAuditLogs } from './pages/admin/AdminAuditLogs.tsx';
-import { AdminCoupons } from './pages/admin/AdminCoupons.tsx';
+// Dedicated Direct Portals (for https://jkmissionnp.com/admin, /shopkeeper, /user)
+import { AdminPortalPage } from './pages/portal/AdminPortalPage.tsx';
+import { ShopkeeperPortalPage } from './pages/portal/ShopkeeperPortalPage.tsx';
+import { UserPortalPage } from './pages/portal/UserPortalPage.tsx';
+import { parseCurrentLocation, getViewUrl } from './utils/router.ts';
 
 function MainApp() {
   const { user, role, isLoading } = useAuth();
-  const [currentView, setCurrentView] = useState<string>('home');
-  const [viewParam, setViewParam] = useState<string | undefined>(undefined);
+  const [currentView, setCurrentView] = useState<string>(() => parseCurrentLocation().view);
+  const [viewParam, setViewParam] = useState<string | undefined>(() => parseCurrentLocation().param);
 
   // Modals
   const [cartModalOpen, setCartModalOpen] = useState(false);
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
   const [invoiceModalOrder, setInvoiceModalOrder] = useState<Order | null>(null);
 
-  const navigateTo = (view: string, param?: string) => {
+  const navigateTo = (view: string, param?: string, replace = false) => {
     setCurrentView(view);
     setViewParam(param);
+    try {
+      const targetUrl = getViewUrl(view, param);
+      if (window.location.pathname !== targetUrl) {
+        if (replace) {
+          window.history.replaceState(null, '', targetUrl);
+        } else {
+          window.history.pushState(null, '', targetUrl);
+        }
+      }
+    } catch {}
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Sync with browser Back and Forward navigation buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const parsed = parseCurrentLocation();
+      setCurrentView(parsed.view);
+      setViewParam(parsed.param);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleOpenInvoice = async (orderId: string) => {
     try {
@@ -78,20 +78,21 @@ function MainApp() {
     }
   };
 
-  // Route security guard: enforce RBAC strictly & redirect logged in users from auth forms
+  // Route security guard: keep sub-pages protected while allowing base portals (/admin, /shopkeeper, /user) to render
   useEffect(() => {
     if (isLoading) return;
 
-    if (currentView.startsWith('admin-') && role !== 'admin') {
-      setCurrentView('login');
-    } else if (currentView.startsWith('shopkeeper-') && role !== 'shopkeeper') {
-      setCurrentView('login');
-    } else if (currentView.startsWith('customer-') && role !== 'customer') {
-      setCurrentView('login');
+    // Sub-pages require corresponding role; if not authenticated, redirect to base portal (/admin, /shopkeeper, /user)
+    if (currentView.startsWith('admin-') && currentView !== 'admin-dashboard' && role !== 'admin') {
+      navigateTo('admin-dashboard', undefined, true);
+    } else if (currentView.startsWith('shopkeeper-') && currentView !== 'shopkeeper-dashboard' && role !== 'shopkeeper') {
+      navigateTo('shopkeeper-dashboard', undefined, true);
+    } else if (currentView.startsWith('customer-') && currentView !== 'customer-dashboard' && role !== 'customer') {
+      navigateTo('customer-dashboard', undefined, true);
     } else if (user && (currentView === 'login' || currentView === 'register-customer' || currentView === 'register-shopkeeper')) {
-      if (role === 'admin') setCurrentView('admin-dashboard');
-      else if (role === 'shopkeeper') setCurrentView('shopkeeper-dashboard');
-      else setCurrentView('customer-dashboard');
+      if (role === 'admin') navigateTo('admin-dashboard', undefined, true);
+      else if (role === 'shopkeeper') navigateTo('shopkeeper-dashboard', undefined, true);
+      else navigateTo('customer-dashboard', undefined, true);
     }
   }, [currentView, role, user, isLoading]);
 
@@ -156,9 +157,10 @@ function MainApp() {
         return (
           <LoginPage
             initialRole={viewParam as 'customer' | 'shopkeeper' | 'admin' | undefined}
-            onLoginSuccess={() => {
-              if (role === 'admin') navigateTo('admin-dashboard');
-              else if (role === 'shopkeeper') navigateTo('shopkeeper-dashboard');
+            onLoginSuccess={(loggedInRole) => {
+              const targetRole = loggedInRole || role;
+              if (targetRole === 'admin') navigateTo('admin-dashboard');
+              else if (targetRole === 'shopkeeper') navigateTo('shopkeeper-dashboard');
               else navigateTo('customer-dashboard');
             }}
             onNavigateRegister={(r) =>
@@ -185,67 +187,179 @@ function MainApp() {
       case 'contact':
         return <ContactPage />;
 
-      // Customer Panel
+      // Customer / User Direct Portal (https://jkmissionnp.com/user)
       case 'customer-dashboard':
         return (
-          <CustomerDashboard
+          <UserPortalPage
+            subView="dashboard"
             onNavigate={navigateTo}
             onViewInvoice={handleOpenInvoice}
           />
         );
       case 'customer-wallets':
         return (
-          <CustomerWallets
-            onNavigateWithdraw={() => navigateTo('customer-withdrawals')}
+          <UserPortalPage
+            subView="wallets"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
           />
         );
       case 'customer-referrals':
-        return <CustomerReferrals />;
+        return (
+          <UserPortalPage
+            subView="referrals"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'customer-orders':
         return (
-          <CustomerOrders
+          <UserPortalPage
+            subView="orders"
+            onNavigate={navigateTo}
             onViewInvoice={handleOpenInvoice}
-            onNavigateShop={() => navigateTo('products')}
           />
         );
       case 'customer-withdrawals':
-        return <CustomerWithdrawals />;
+        return (
+          <UserPortalPage
+            subView="withdrawals"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'customer-coupons':
-        return <CustomerCoupons onNavigateShop={() => navigateTo('products')} />;
+        return (
+          <UserPortalPage
+            subView="coupons"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
 
-      // Shopkeeper Panel
+      // Shopkeeper Direct Portal (https://jkmissionnp.com/shopkeeper)
       case 'shopkeeper-dashboard':
-        return <ShopkeeperDashboard onNavigate={navigateTo} />;
+        return (
+          <ShopkeeperPortalPage
+            subView="dashboard"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'shopkeeper-products':
-        return <ShopkeeperProducts />;
+        return (
+          <ShopkeeperPortalPage
+            subView="products"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'shopkeeper-inventory':
-        return <ShopkeeperInventory />;
+        return (
+          <ShopkeeperPortalPage
+            subView="inventory"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'shopkeeper-orders':
-        return <ShopkeeperOrders onViewInvoice={handleOpenInvoice} />;
+        return (
+          <ShopkeeperPortalPage
+            subView="orders"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'shopkeeper-wallet':
-        return <ShopkeeperWallet />;
+        return (
+          <ShopkeeperPortalPage
+            subView="wallet"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
 
-      // Admin Panel
+      // Admin Direct Portal (https://jkmissionnp.com/admin)
       case 'admin-dashboard':
-        return <AdminDashboard onNavigate={navigateTo} />;
+        return (
+          <AdminPortalPage
+            subView="dashboard"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-products':
-        return <AdminProducts />;
+        return (
+          <AdminPortalPage
+            subView="products"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-customers':
-        return <AdminCustomers />;
+        return (
+          <AdminPortalPage
+            subView="customers"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-shopkeepers':
-        return <AdminShopkeepers />;
+        return (
+          <AdminPortalPage
+            subView="shopkeepers"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-orders':
-        return <AdminOrders onViewInvoice={handleOpenInvoice} />;
+        return (
+          <AdminPortalPage
+            subView="orders"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-withdrawals':
-        return <AdminWithdrawals />;
+        return (
+          <AdminPortalPage
+            subView="withdrawals"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-ledgers':
-        return <AdminLedgers />;
+        return (
+          <AdminPortalPage
+            subView="ledgers"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-settings':
-        return <AdminSettings />;
+        return (
+          <AdminPortalPage
+            subView="settings"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-audit-logs':
-        return <AdminAuditLogs />;
+        return (
+          <AdminPortalPage
+            subView="audit-logs"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
       case 'admin-coupons':
-        return <AdminCoupons />;
+        return (
+          <AdminPortalPage
+            subView="coupons"
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
+          />
+        );
 
       default:
         return (

@@ -18,8 +18,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
   // If inside any panel, show clean workspace management footer
   if (isPanelRoute) {
     return (
-      <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-800 py-5 px-4 sm:px-6 lg:px-8 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-800 py-5 px-3 sm:px-6 lg:px-8 mt-auto">
+        <div className="max-w-[1600px] w-full mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div className="flex items-center space-x-2">
             <div className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 font-black flex items-center justify-center text-xs">
               JK
@@ -47,8 +47,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
   return (
     <footer className="bg-slate-950 text-slate-400 text-sm border-t border-slate-800">
       {/* Top Banner - Clean Trust & Official Verification (No Action Buttons) */}
-      <div className="bg-amber-400 text-slate-950 py-3.5 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+      <div className="bg-amber-400 text-slate-950 py-3.5 px-3 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] w-full mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
           <div className="flex items-center space-x-3">
             <div className="w-9 h-9 rounded-xl bg-slate-950 text-amber-300 font-black flex items-center justify-center text-base">
               JK
@@ -79,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Col 1: About & Info */}
           <div className="lg:col-span-2 space-y-4">
@@ -155,98 +155,73 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
             </ul>
           </div>
 
-          {/* Col 3: Portal Dashboards */}
+          {/* Col 3: Portal Dashboards & Direct Links */}
           <div>
-            <h4 className="text-white font-bold text-sm mb-3">Portals</h4>
-            <ul className="space-y-2 text-xs">
-              {!user ? (
-                <>
-                  <li>
-                    <button onClick={() => onNavigate('login')} className="hover:text-amber-300 transition-colors">
-                      User Login (Customer/Shop/Admin)
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => onNavigate('register-customer')} className="hover:text-amber-300 transition-colors">
-                      Customer Registration
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => onNavigate('register-shopkeeper')} className="hover:text-amber-300 transition-colors">
-                      Shopkeeper Application
-                    </button>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    <button
-                      onClick={() => {
-                        if (role === 'admin') onNavigate('admin-dashboard');
-                        else if (role === 'shopkeeper') onNavigate('shopkeeper-dashboard');
-                        else onNavigate('customer-dashboard');
-                      }}
-                      className="text-amber-400 font-bold hover:text-amber-300 transition-colors flex items-center gap-1"
-                    >
-                      <span>Go to {role === 'admin' ? 'Admin Portal' : role === 'shopkeeper' ? 'Shopkeeper Hub' : 'Customer Dashboard'}</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
-                  </li>
-                  {role === 'customer' && (
-                    <>
-                      <li>
-                        <button onClick={() => onNavigate('customer-wallets')} className="hover:text-amber-300 transition-colors">
-                          My Wallets & Cashback
-                        </button>
-                      </li>
-                      <li>
-                        <button onClick={() => onNavigate('customer-referrals')} className="hover:text-amber-300 transition-colors">
-                          3-Level Referral Team
-                        </button>
-                      </li>
-                      <li>
-                        <button onClick={() => onNavigate('customer-orders')} className="hover:text-amber-300 transition-colors">
-                          My Orders & Invoices
-                        </button>
-                      </li>
-                    </>
-                  )}
-                  {role === 'shopkeeper' && (
-                    <>
-                      <li>
-                        <button onClick={() => onNavigate('shopkeeper-products')} className="hover:text-amber-300 transition-colors">
-                          Manage Products
-                        </button>
-                      </li>
-                      <li>
-                        <button onClick={() => onNavigate('shopkeeper-wallet')} className="hover:text-amber-300 transition-colors">
-                          Commission Wallet
-                        </button>
-                      </li>
-                    </>
-                  )}
-                  {role === 'admin' && (
-                    <>
-                      <li>
-                        <button onClick={() => onNavigate('admin-products')} className="hover:text-amber-300 transition-colors">
-                          Product Approvals
-                        </button>
-                      </li>
-                      <li>
-                        <button onClick={() => onNavigate('admin-ledgers')} className="hover:text-amber-300 transition-colors">
-                          Financial Ledgers
-                        </button>
-                      </li>
-                    </>
-                  )}
-                  <li className="pt-1">
-                    <button onClick={logout} className="text-red-400 hover:text-red-300 transition-colors font-semibold">
-                      Sign Out
-                    </button>
-                  </li>
-                </>
+            <h4 className="text-white font-bold text-sm mb-3">Direct Portals</h4>
+            <div className="space-y-2 text-xs">
+              <button
+                onClick={() => onNavigate('customer-dashboard')}
+                className="w-full text-left p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-400/50 hover:bg-slate-850 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <div className="font-bold text-slate-200 group-hover:text-amber-300">Customer Portal</div>
+                  <div className="text-[10px] font-mono text-slate-500">https://jkmissionnp.com/user</div>
+                </div>
+                <span className="text-[10px] font-bold bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded">/user</span>
+              </button>
+
+              <button
+                onClick={() => onNavigate('shopkeeper-dashboard')}
+                className="w-full text-left p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-400/50 hover:bg-slate-850 transition-all flex items-center justify-between group"
+              >
+                <div>
+                  <div className="font-bold text-slate-200 group-hover:text-blue-300">Shopkeeper Hub</div>
+                  <div className="text-[10px] font-mono text-slate-500">https://jkmissionnp.com/shopkeeper</div>
+                </div>
+                <span className="text-[10px] font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded">/shopkeeper</span>
+              </button>
+
+              {role === 'admin' && (
+                <button
+                  onClick={() => onNavigate('admin-dashboard')}
+                  className="w-full text-left p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-850 transition-all flex items-center justify-between group"
+                >
+                  <div>
+                    <div className="font-bold text-slate-200 group-hover:text-amber-400">Master Admin</div>
+                    <div className="text-[10px] font-mono text-slate-500">https://jkmissionnp.com/admin</div>
+                  </div>
+                  <span className="text-[10px] font-bold bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded">/admin</span>
+                </button>
               )}
-            </ul>
+            </div>
+
+            {user && (
+              <div className="pt-3 mt-3 border-t border-slate-800/80 space-y-1.5">
+                <div className="text-[11px] font-bold text-amber-400 capitalize flex items-center justify-between">
+                  <span>Logged in as {role}</span>
+                  <span className="text-slate-400 text-[10px] font-normal truncate max-w-[120px]">{user.name}</span>
+                </div>
+                <div className="flex items-center space-x-2 text-xs">
+                  <button
+                    onClick={() => {
+                      if (role === 'admin') onNavigate('admin-dashboard');
+                      else if (role === 'shopkeeper') onNavigate('shopkeeper-dashboard');
+                      else onNavigate('customer-dashboard');
+                    }}
+                    className="text-amber-300 hover:underline font-bold"
+                  >
+                    Open Workspace →
+                  </button>
+                  <span className="text-slate-600">•</span>
+                  <button
+                    onClick={logout}
+                    className="text-red-400 hover:text-red-300 font-semibold"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Col 4: Legal & Policies */}

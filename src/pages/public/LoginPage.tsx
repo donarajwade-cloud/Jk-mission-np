@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.tsx';
-import { LogIn, ShieldCheck, Store, UserCheck, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { LogIn, Store, UserCheck, AlertCircle } from 'lucide-react';
 
 interface LoginPageProps {
   initialRole?: 'customer' | 'shopkeeper' | 'admin';
@@ -14,19 +14,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onNavigateRegister
 }) => {
   const { login } = useAuth();
-  const [activeTab, setActiveTab] = useState<'customer' | 'shopkeeper' | 'admin'>(initialRole);
+  // Keep active tab as customer or shopkeeper (admin is hidden from public view)
+  const [activeTab, setActiveTab] = useState<'customer' | 'shopkeeper'>(
+    initialRole === 'shopkeeper' ? 'shopkeeper' : 'customer'
+  );
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialRole) {
-      setActiveTab(initialRole);
-      if (initialRole === 'admin') {
-        setIdentifier('jk5172794@gmail.com');
-        setPassword('Admin123@');
-      }
+    if (initialRole === 'shopkeeper') {
+      setActiveTab('shopkeeper');
+    } else if (initialRole === 'customer') {
+      setActiveTab('customer');
     }
   }, [initialRole]);
 
@@ -38,7 +39,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     try {
       const res = await login(identifier.trim(), password);
       if (res.success) {
-        onLoginSuccess('logged-in');
+        // Automatic Admin Detection:
+        // If master admin enters their email/phone & password, automatically route to admin-dashboard!
+        const resolvedRole = res.user?.role || activeTab;
+        onLoginSuccess(resolvedRole);
       } else {
         setError(res.error || 'Login failed. Please verify your credentials.');
       }
@@ -54,19 +58,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setPassword(p);
   };
 
-  const handleTabChange = (tab: 'customer' | 'shopkeeper' | 'admin') => {
+  const handleTabChange = (tab: 'customer' | 'shopkeeper') => {
     setActiveTab(tab);
     setError(null);
-    if (tab === 'customer') {
-      setIdentifier('+9779822222222');
-      setPassword('Customer@123');
-    } else if (tab === 'shopkeeper') {
-      setIdentifier('+9779811111111');
-      setPassword('Shopkeeper@123');
-    } else {
-      setIdentifier('jk5172794@gmail.com');
-      setPassword('Admin123@');
-    }
   };
 
   return (
@@ -78,60 +72,41 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             JK
           </div>
           <h1 className="text-2xl font-black text-slate-950 pt-2">
-            {activeTab === 'shopkeeper'
-              ? 'Shopkeeper Login'
-              : activeTab === 'admin'
-              ? 'Administrator Login'
-              : 'User Login'}
+            {activeTab === 'shopkeeper' ? 'Shopkeeper Login' : 'User / Customer Login'}
           </h1>
           <p className="text-xs text-slate-500">
             {activeTab === 'shopkeeper'
               ? 'Sign in to manage your inventory, orders & sales commission'
-              : activeTab === 'admin'
-              ? 'Sign in to access admin approvals, ledger & settlement rules'
               : 'Sign in to shop, track orders, and view your cashback balance'}
           </p>
         </div>
 
-        {/* Role Selection Tabs */}
-        <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-bold">
+        {/* Public Role Selection Tabs (Only Customer and Shopkeeper shown) */}
+        <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-bold">
           <button
             type="button"
             onClick={() => handleTabChange('customer')}
-            className={`py-2 px-2 rounded-xl flex items-center justify-center space-x-1.5 transition-all ${
+            className={`py-2 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-all ${
               activeTab === 'customer'
                 ? 'bg-white text-slate-950 shadow-sm'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
-            <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="truncate">Customer</span>
+            <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="truncate">Customer Account</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleTabChange('shopkeeper')}
-            className={`py-2 px-2 rounded-xl flex items-center justify-center space-x-1.5 transition-all ${
+            className={`py-2 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-all ${
               activeTab === 'shopkeeper'
                 ? 'bg-white text-slate-950 shadow-sm'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
-            <Store className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span className="truncate">Shopkeeper</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange('admin')}
-            className={`py-2 px-2 rounded-xl flex items-center justify-center space-x-1.5 transition-all ${
-              activeTab === 'admin'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-600 hover:text-slate-950'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-            <span className="truncate">Admin</span>
+            <Store className="w-4 h-4 text-blue-600 shrink-0" />
+            <span className="truncate">Shopkeeper Hub</span>
           </button>
         </div>
 
@@ -142,18 +117,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
         )}
 
-        {/* Form */}
+        {/* Form - Supports both mobile and email automatically */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
             <label className="block font-bold text-slate-700 mb-1">
-              {activeTab === 'admin' ? 'Master Admin Email or Mobile' : 'Registered Mobile Number (+977)'}
+              Registered Mobile Number or Email
             </label>
             <input
-              type={activeTab === 'admin' ? 'text' : 'tel'}
+              type="text"
               required
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder={activeTab === 'admin' ? 'jk5172794@gmail.com or +9779766133831' : '+97798XXXXXXXX or 98XXXXXXXX'}
+              placeholder="e.g. +97798XXXXXXXX or email address"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono text-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200/50"
             />
           </div>
@@ -175,57 +150,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 shadow-md shadow-amber-300/40 hover:shadow-lg transition-all disabled:opacity-50"
+            className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 shadow-md shadow-amber-300/40 hover:shadow-lg transition-all disabled:opacity-50"
           >
             <LogIn className="w-4 h-4" />
-            <span>{loading ? 'Authenticating...' : `Sign In as ${activeTab === 'shopkeeper' ? 'Shopkeeper' : activeTab === 'admin' ? 'Master Admin' : 'User'}`}</span>
+            <span>{loading ? 'Authenticating...' : `Sign In`}</span>
           </button>
         </form>
 
-        {/* Quick Fill Credentials for testing */}
-        <div className="pt-3 border-t border-slate-100">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">
-            1-Click Quick Fill
-          </p>
-          <div className="grid grid-cols-3 gap-2 text-[10px]">
+        {/* Public Demo Testing Credentials Helper (Collapsed by default - Admin hidden) */}
+        <details className="group pt-2 border-t border-slate-100 text-slate-500">
+          <summary className="cursor-pointer text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center py-1 hover:text-slate-600 list-none flex items-center justify-center space-x-1">
+            <span>Demo Test Credentials (For Review)</span>
+            <span className="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div className="pt-2 grid grid-cols-2 gap-2 text-[10px]">
             <button
               type="button"
               onClick={() => handleQuickFill('+9779822222222', 'Customer@123')}
-              className={`p-2 rounded-xl border font-bold text-center transition-colors ${
-                activeTab === 'customer'
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-              }`}
+              className="p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 font-bold text-center transition-colors"
             >
               <UserCheck className="w-3.5 h-3.5 mx-auto mb-0.5 text-emerald-600" />
-              <span>User Demo</span>
+              <span>Customer</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('+9779811111111', 'Shopkeeper@123')}
-              className={`p-2 rounded-xl border font-bold text-center transition-colors ${
-                activeTab === 'shopkeeper'
-                  ? 'border-blue-300 bg-blue-50 text-blue-900'
-                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-              }`}
+              className="p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-50 hover:border-blue-300 font-bold text-center transition-colors"
             >
               <Store className="w-3.5 h-3.5 mx-auto mb-0.5 text-blue-600" />
               <span>Shopkeeper</span>
             </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('jk5172794@gmail.com', 'Admin123@')}
-              className={`p-2 rounded-xl border font-bold text-center transition-colors ${
-                activeTab === 'admin'
-                  ? 'border-amber-400 bg-amber-50 text-amber-950'
-                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 mx-auto mb-0.5 text-amber-700" />
-              <span>Master Admin</span>
-            </button>
           </div>
-        </div>
+        </details>
 
         {/* Links to Register */}
         <div className="pt-2 text-center text-xs space-y-2 border-t border-slate-100">

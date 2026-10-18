@@ -585,7 +585,7 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
       const uid = token.replace('local_user_', '');
       currentUser = db.users.find(u => u.id === uid) || null;
     } else {
-      currentUser = db.users[0] || null;
+      currentUser = null;
     }
   }
 

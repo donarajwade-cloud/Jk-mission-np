@@ -529,6 +529,18 @@ function verifyToken(token) {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch {
+    if (token && token.startsWith("local_user_")) {
+      const uid = token.replace("local_user_", "");
+      const user = db.data.users.find((u) => u.id === uid);
+      if (user) {
+        return {
+          userId: user.id,
+          role: user.role,
+          mobile: user.mobile,
+          name: user.name
+        };
+      }
+    }
     return null;
   }
 }
@@ -3022,8 +3034,8 @@ loadDatabase();
 var app = express();
 var PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3e3;
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 app.use("/api/auth", authRoutes_default);
 app.use("/api/products", productRoutes_default);

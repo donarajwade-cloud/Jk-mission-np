@@ -50,14 +50,63 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-200/60 shadow-xs">
-      {/* Top Banner Notice */}
-      <div className="bg-amber-400 text-slate-950 text-xs font-semibold px-4 py-1.5 text-center flex items-center justify-center space-x-2 leading-tight">
-        <span className="bg-slate-900 text-amber-300 px-1.5 py-0.5 rounded-sm text-[10px] uppercase tracking-wider font-bold shrink-0">
-          JK MISSION
-        </span>
-        <span className="truncate sm:overflow-visible">
-          Smart Retail, Real Cashback & 3-Level Referral Platform • Currency: NPR (रु)
-        </span>
+      {/* Top Banner with Direct Portal Links (/user, /shopkeeper, /admin) */}
+      <div className="bg-slate-950 text-slate-300 text-xs font-semibold px-3 py-1.5 border-b border-slate-800">
+        <div className="max-w-[1600px] w-full mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center space-x-2">
+            <span className="bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-black shrink-0">
+              JK MISSION NEPAL
+            </span>
+            <span className="text-slate-400 text-[11px] hidden md:inline">
+              Smart Retail, Real Cashback & 3-Level Referral • Currency: NPR (रु)
+            </span>
+          </div>
+
+          {/* Quick Direct Portal Links */}
+          <div className="flex items-center space-x-1.5 text-[11px] font-bold">
+            <span className="text-slate-500 mr-1 hidden sm:inline">Direct Portals:</span>
+            <button
+              onClick={() => onNavigate('customer-dashboard')}
+              className={`px-2 py-0.5 rounded transition-colors flex items-center space-x-1 ${
+                currentView.startsWith('customer-')
+                  ? 'bg-amber-400 text-slate-950 font-black'
+                  : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
+              title="Customer Portal: /user"
+            >
+              <span>👤</span>
+              <span>/user</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('shopkeeper-dashboard')}
+              className={`px-2 py-0.5 rounded transition-colors flex items-center space-x-1 ${
+                currentView.startsWith('shopkeeper-')
+                  ? 'bg-blue-500 text-white font-black'
+                  : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
+              title="Shopkeeper Portal: /shopkeeper"
+            >
+              <span>🏪</span>
+              <span>/shopkeeper</span>
+            </button>
+
+            {role === 'admin' && (
+              <button
+                onClick={() => onNavigate('admin-dashboard')}
+                className={`px-2 py-0.5 rounded transition-colors flex items-center space-x-1 ${
+                  currentView.startsWith('admin-')
+                    ? 'bg-amber-500 text-slate-950 font-black'
+                    : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
+                title="Master Admin Portal: /admin"
+              >
+                <span>🛡️</span>
+                <span>/admin</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8">
@@ -390,6 +439,47 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-3">
+          {/* Direct Portal Shortcuts for Mobile */}
+          <div className="bg-slate-900 p-2.5 rounded-2xl space-y-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">
+              Direct Subdomain & Path Portals
+            </span>
+            <div className={`grid ${role === 'admin' ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 text-xs font-bold`}>
+              <button
+                onClick={() => {
+                  onNavigate('customer-dashboard');
+                  setMobileMenuOpen(false);
+                }}
+                className="py-1.5 px-2 rounded-lg bg-amber-400 text-slate-950 text-center truncate"
+                title="Customer Portal: /user"
+              >
+                👤 /user
+              </button>
+              <button
+                onClick={() => {
+                  onNavigate('shopkeeper-dashboard');
+                  setMobileMenuOpen(false);
+                }}
+                className="py-1.5 px-2 rounded-lg bg-blue-600 text-white text-center truncate"
+                title="Shopkeeper Portal: /shopkeeper"
+              >
+                🏪 /shopkeeper
+              </button>
+              {role === 'admin' && (
+                <button
+                  onClick={() => {
+                    onNavigate('admin-dashboard');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="py-1.5 px-2 rounded-lg bg-amber-500 text-slate-950 text-center truncate"
+                  title="Admin Portal: /admin"
+                >
+                  🛡️ /admin
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             {navLinks.map((link) => (
               <button

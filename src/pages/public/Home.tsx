@@ -20,7 +20,8 @@ import {
   Check,
   Truck,
   Percent,
-  SlidersHorizontal
+  SlidersHorizontal,
+  UserCheck
 } from 'lucide-react';
 
 interface HomeProps {
@@ -134,8 +135,8 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
   return (
     <div className="space-y-12 pb-20">
       {/* Shopping Hero Banner */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-amber-100/70 via-amber-50/40 to-white pt-10 pb-14 px-4 sm:px-6 lg:px-8 border-b border-amber-200/60">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <section className="relative overflow-hidden bg-gradient-to-b from-amber-100/70 via-amber-50/40 to-white pt-8 sm:pt-10 pb-12 sm:pb-14 px-3 sm:px-6 lg:px-8 border-b border-amber-200/60">
+        <div className="w-full max-w-[1600px] mx-auto space-y-8">
           <div className="max-w-3xl mx-auto text-center space-y-4">
             <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-amber-200/80 border border-amber-300 text-slate-950 text-xs font-black tracking-wide shadow-2xs">
               <Sparkles className="w-4 h-4 text-amber-700" />
@@ -177,7 +178,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
                   const el = document.getElementById('shopping-catalog');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shrink-0 shadow-sm transition-all"
+                className="px-4 sm:px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shrink-0 shadow-sm transition-all"
               >
                 Find Items
               </button>
@@ -230,7 +231,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
       </section>
 
       {/* Promo Spotlight Cards */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-6 text-slate-950 shadow-md relative overflow-hidden flex flex-col justify-between">
             <div className="space-y-2">
@@ -296,6 +297,92 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
                 className="px-4 py-2 rounded-xl bg-white text-emerald-900 hover:bg-emerald-50 font-black text-xs flex items-center space-x-1.5 transition-colors"
               >
                 <span>How Referral Works</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Customer & Merchant Direct Portals (User & Shopkeeper) */}
+      <section className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-xl space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-5">
+            <div>
+              <div className="inline-flex items-center space-x-2 text-xs font-black text-amber-400 uppercase tracking-widest mb-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Dedicated Portals</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Customer & Merchant Portals
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                Choose your gateway to shop, earn cashback, build your referral network, or manage your store in Nepal:
+              </p>
+            </div>
+            <div className="flex items-center space-x-2 text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 shrink-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Fast & Secure NPR System</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* 1. Customer / User Portal */}
+            <div className="bg-slate-900/80 rounded-2xl p-6 border border-slate-800 hover:border-amber-400/50 transition-all flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-11 h-11 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center font-black">
+                    <UserCheck className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-mono font-bold bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full">
+                    /user
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">Customer & Member Portal</h3>
+                  <p className="text-[11px] font-mono text-amber-300 font-semibold mt-0.5">
+                    https://jkmissionnp.com/user
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                    Personal dashboard for shoppers, customer cashback tracking, digital coupons & 3-level referral network commissions.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onNavigate('customer-dashboard')}
+                className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-2xs"
+              >
+                <span>Open Customer Portal (/user)</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* 2. Shopkeeper Portal */}
+            <div className="bg-slate-900/80 rounded-2xl p-6 border border-slate-800 hover:border-blue-400/50 transition-all flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-11 h-11 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-black">
+                    <Store className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-mono font-bold bg-blue-500 text-white px-2.5 py-0.5 rounded-full">
+                    /shopkeeper
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">Shopkeeper Merchant Portal</h3>
+                  <p className="text-[11px] font-mono text-blue-300 font-semibold mt-0.5">
+                    https://jkmissionnp.com/shopkeeper
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                    Merchant control room to list products, manage inventory stock, confirm orders & withdraw store commissions.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onNavigate('shopkeeper-dashboard')}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-2xs"
+              >
+                <span>Open Shopkeeper Portal (/shopkeeper)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -474,7 +561,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
       </section>
 
       {/* Participating Shops Showcase */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 border-b border-slate-200 pb-4">
           <div>
             <div className="inline-flex items-center space-x-1.5 text-xs font-black text-amber-700 uppercase tracking-wider mb-1">
@@ -540,8 +627,8 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
       </section>
 
       {/* How Shopping & Rewards Work (Clean 3-Step) */}
-      <section className="bg-amber-50/50 py-14 border-y border-amber-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <section className="bg-amber-50/50 py-12 sm:py-14 border-y border-amber-200/60">
+        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
               Transparent & Simple
@@ -589,7 +676,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
       </section>
 
       {/* FAQs */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <section className="w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 space-y-6">
         <div className="text-center space-y-1">
           <div className="inline-flex items-center space-x-1.5 text-xs font-black text-amber-700 uppercase tracking-wider">
             <HelpCircle className="w-3.5 h-3.5" />

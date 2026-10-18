@@ -56,7 +56,7 @@ export const ShopkeeperDashboard: React.FC<ShopkeeperDashboardProps> = ({ onNavi
   const lowStockProds = products.filter(p => p.stockQuantity <= p.lowStockThreshold);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-200 rounded-3xl p-6 sm:p-8 border border-amber-300 text-slate-950 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>

@@ -92,7 +92,7 @@ export const ShopkeeperWallet: React.FC = () => {
   const withdrawals = data?.withdrawals || [];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Page Header */}
       <div>
         <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-blue-100 border border-blue-300 text-blue-900 text-[10px] font-black uppercase tracking-wider mb-1">
