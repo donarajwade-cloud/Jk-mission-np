@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../services/api.ts';
 import { formatNPR, formatNepaliDate } from '../../utils/format.ts';
 import { CashbackCoupon, Order } from '../../types/index.ts';
+import { OrderConfirmationPage } from './OrderConfirmationPage.tsx';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -73,6 +74,21 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         });
     }
   }, [user, role]);
+
+  // If order was successfully placed, render the Full Page Order Confirmation & Tracking
+  if (successOrder) {
+    return (
+      <OrderConfirmationPage
+        orderId={successOrder.id}
+        initialOrder={successOrder}
+        onNavigate={(v) => {
+          if (v === 'products') onBack();
+          else onOrderSuccess(successOrder.id);
+        }}
+        onViewInvoice={(id) => onOrderSuccess(id)}
+      />
+    );
+  }
 
   if (cart.length === 0 && !successOrder) {
     return (
@@ -199,6 +215,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       if (res.success && res.order) {
         clearCart();
         setSuccessOrder(res.order);
+        onOrderSuccess(res.order.id);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to place order');
@@ -560,100 +577,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
           </div>
         </div>
       </form>
-
-      {/* Post-Order Celebration Modal with Awarded Next-Purchase Coupon */}
-      {successOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden space-y-6 p-7 sm:p-8">
-            {/* Header Success Icon */}
-            <div className="text-center space-y-2">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-black text-slate-950">
-                Order #{successOrder.orderNumber} Confirmed!
-              </h2>
-              <p className="text-xs text-slate-500">
-                Thank you for your purchase. Your payment reference and invoice have been registered.
-              </p>
-            </div>
-
-            {/* Awarded Next-Purchase Cashback Coupon Showcase */}
-            {successOrder.awardedCoupon && (
-              <div className="bg-linear-to-br from-slate-950 via-slate-900 to-amber-950 text-white p-5 rounded-2xl border border-amber-500/40 shadow-lg space-y-3 relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span className="text-[10px] uppercase font-black tracking-wider text-amber-300">
-                      Next-Purchase Cashback Coupon Unlocked!
-                    </span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-400 text-slate-950">
-                    Level {successOrder.awardedCoupon.level} Tier
-                  </span>
-                </div>
-
-                <div>
-                  <p className="text-2xl font-black text-white">
-                    {successOrder.awardedCoupon.discountPercentage}% DISCOUNT
-                  </p>
-                  <p className="text-[11px] text-slate-300 mt-0.5">
-                    Admin automatic reward for completing an order at this level. Valid on your next purchase!
-                  </p>
-                </div>
-
-                {/* Coupon Code Pill with Copy */}
-                <div className="bg-slate-900/90 border border-slate-700 p-3 rounded-xl flex items-center justify-between font-mono text-xs">
-                  <span className="text-amber-400 font-extrabold text-sm tracking-wider">
-                    {successOrder.awardedCoupon.code}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyAwardedCoupon(successOrder.awardedCoupon!.code)}
-                    className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-sans font-bold text-xs flex items-center space-x-1 transition-all"
-                  >
-                    {copiedAwardCode ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-slate-950" />
-                        <span>Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-slate-950" />
-                        <span>Copy Code</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <p className="text-[10px] text-slate-400">
-                  This coupon has also been saved to your account in &quot;My Coupons&quot; for 30 days.
-                </p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="space-y-2 pt-2">
-              <button
-                type="button"
-                onClick={() => onOrderSuccess(successOrder.id)}
-                className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center space-x-1.5 shadow-md transition-all"
-              >
-                <FileText className="w-4 h-4" />
-                <span>View Official Tax Invoice</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onBack}
-                className="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
-              >
-                Continue Shopping
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

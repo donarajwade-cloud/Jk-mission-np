@@ -169,6 +169,21 @@ router.post('/', authenticateToken, requireRole('customer'), (req: Request, res:
       paymentReference: paymentReference || undefined,
       paymentStatus: 'pending',
       orderStatus: 'placed',
+      deliveryStatus: 'order_placed',
+      courierName: undefined,
+      trackingNumber: undefined,
+      deliveryNotes: undefined,
+      estimatedDeliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      deliveryStatusUpdatedAt: now,
+      deliveryTimeline: [
+        {
+          status: 'order_placed',
+          label: 'Order Placed',
+          updatedAt: now,
+          note: 'Order successfully created and received by JK Mission system',
+          updatedByRole: 'system'
+        }
+      ],
       shippingAddress,
       commissionProcessed: false,
       createdAt: now
@@ -349,6 +364,107 @@ router.put('/:id/refund', authenticateToken, requireRole('admin'), (req: Request
 
   const updatedOrder = db.data.orders.find(o => o.id === req.params.id);
   res.json({ success: true, message: refundResult.message, order: updatedOrder });
+});
+
+// Update Delivery Status & Shipping Details (Shopkeeper or Admin)
+router.put('/:id/delivery-status', authenticateToken, (req: Request, res: Response): void => {
+  const { deliveryStatus, courierName, trackingNumber, deliveryNotes, estimatedDeliveryDate } = req.body;
+
+  if (!deliveryStatus) {
+    res.status(400).json({ success: false, error: 'deliveryStatus is required' });
+    return;
+  }
+
+  const result = db.transaction((data) => {
+    const order = data.orders.find(o => o.id === req.params.id);
+    if (!order) {
+      return { success: false, error: 'Order not found' };
+    }
+
+    const isAdmin = req.user!.role === 'admin';
+    const isShopOwner = order.items.some(it => it.shopkeeperUserId === req.user!.userId);
+
+    if (!isAdmin && !isShopOwner) {
+      return { success: false, error: 'Access denied: Only the shopkeeper or master admin can update delivery tracking' };
+    }
+
+    const now = new Date().toISOString();
+    order.deliveryStatus = deliveryStatus;
+    order.deliveryStatusUpdatedAt = now;
+
+    if (courierName !== undefined) order.courierName = courierName.trim() || undefined;
+    if (trackingNumber !== undefined) order.trackingNumber = trackingNumber.trim() || undefined;
+    if (deliveryNotes !== undefined) order.deliveryNotes = deliveryNotes.trim() || undefined;
+    if (estimatedDeliveryDate !== undefined) order.estimatedDeliveryDate = estimatedDeliveryDate || undefined;
+
+    // Sync orderStatus if delivered, processing, or cancelled
+    if (deliveryStatus === 'delivered') {
+      order.orderStatus = 'delivered';
+      if (!order.completedAt) order.completedAt = now;
+    } else if (deliveryStatus === 'processing' || deliveryStatus === 'shipped' || deliveryStatus === 'out_for_delivery') {
+      if (order.orderStatus === 'placed') {
+        order.orderStatus = 'processing';
+      }
+    } else if (deliveryStatus === 'cancelled') {
+      order.orderStatus = 'cancelled';
+    }
+
+    const statusLabels: Record<string, string> = {
+      order_placed: 'Order Placed',
+      confirmed: 'Confirmed by Store',
+      processing: 'Packed & Processing',
+      shipped: 'Shipped (In Transit)',
+      out_for_delivery: 'Out for Delivery',
+      delivered: 'Delivered Successfully',
+      cancelled: 'Delivery Cancelled'
+    };
+
+    const label = statusLabels[deliveryStatus] || deliveryStatus;
+
+    if (!order.deliveryTimeline) {
+      order.deliveryTimeline = [];
+    }
+
+    order.deliveryTimeline.push({
+      status: deliveryStatus,
+      label,
+      updatedAt: now,
+      note: deliveryNotes ? deliveryNotes.trim() : undefined,
+      courierName: courierName ? courierName.trim() : undefined,
+      trackingNumber: trackingNumber ? trackingNumber.trim() : undefined,
+      updatedByRole: req.user!.role as 'shopkeeper' | 'admin'
+    });
+
+    // Notify Customer about status change
+    data.notifications.push({
+      id: `notif_del_${Date.now()}`,
+      recipientUserId: order.customerId,
+      title: `🚚 Order #${order.orderNumber}: ${label}`,
+      message: `Your order delivery status is now "${label}".${order.courierName ? ` Courier: ${order.courierName}.` : ''}${order.trackingNumber ? ` Tracking: ${order.trackingNumber}.` : ''}`,
+      type: 'order',
+      read: false,
+      createdAt: now
+    });
+
+    data.auditLogs.push({
+      id: `audit_del_${order.id}_${Date.now()}`,
+      action: 'DELIVERY_STATUS_UPDATED',
+      actorUserId: req.user!.userId,
+      actorRole: req.user!.role,
+      details: `Delivery status for order #${order.orderNumber} changed to "${label}". Courier: ${order.courierName || 'N/A'}, Tracking: ${order.trackingNumber || 'N/A'}`,
+      entityType: 'order',
+      entityId: order.id,
+      timestamp: now
+    });
+
+    return { success: true, order, message: `Delivery status updated to ${label}` };
+  });
+
+  if (!result.success) {
+    res.status(400).json(result);
+  } else {
+    res.json(result);
+  }
 });
 
 export default router;

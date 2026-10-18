@@ -521,6 +521,28 @@ export function loadDatabase(): DatabaseSchema {
         dbState.coupons = [];
         migrated = true;
       }
+      if (dbState.orders) {
+        dbState.orders.forEach(o => {
+          if (!o.deliveryStatus) {
+            o.deliveryStatus = (o.orderStatus === 'completed' || o.orderStatus === 'delivered')
+              ? 'delivered'
+              : (o.orderStatus === 'cancelled' ? 'cancelled' : 'order_placed');
+            migrated = true;
+          }
+          if (!o.deliveryTimeline || o.deliveryTimeline.length === 0) {
+            o.deliveryTimeline = [
+              {
+                status: o.deliveryStatus,
+                label: o.deliveryStatus === 'delivered' ? 'Delivered Successfully' : 'Order Placed',
+                updatedAt: o.createdAt || new Date().toISOString(),
+                note: 'Order registered in JK Mission system',
+                updatedByRole: 'system'
+              }
+            ];
+            migrated = true;
+          }
+        });
+      }
       if (migrated) {
         persistDb();
       }

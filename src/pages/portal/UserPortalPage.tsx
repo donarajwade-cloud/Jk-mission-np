@@ -39,7 +39,13 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({
       case 'team':
         return <CustomerReferrals />;
       case 'orders':
-        return <CustomerOrders onViewInvoice={onViewInvoice || (() => {})} onNavigateShop={() => onNavigate('products')} />;
+        return (
+          <CustomerOrders
+            onViewInvoice={onViewInvoice || (() => {})}
+            onNavigateShop={() => onNavigate('products')}
+            onNavigateTracking={(orderId) => onNavigate('order-confirmation', orderId)}
+          />
+        );
       case 'withdrawals':
         return <CustomerWithdrawals />;
       default:

@@ -1067,6 +1067,21 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
       paymentReference: body.paymentReference,
       paymentStatus: body.paymentMethod === 'cash_on_delivery' ? 'pending' : 'verified',
       orderStatus: 'placed',
+      deliveryStatus: 'order_placed',
+      courierName: undefined,
+      trackingNumber: undefined,
+      deliveryNotes: undefined,
+      estimatedDeliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      deliveryStatusUpdatedAt: now,
+      deliveryTimeline: [
+        {
+          status: 'order_placed',
+          label: 'Order Placed',
+          updatedAt: now,
+          note: 'Order successfully placed in JK Mission Nepal',
+          updatedByRole: 'system'
+        }
+      ],
       shippingAddress: body.shippingAddress,
       commissionProcessed: false,
       createdAt: now
@@ -1418,6 +1433,70 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     return {
       success: true,
       message: 'Commissions and cashbacks released successfully',
+      order
+    } as unknown as T;
+  }
+
+  if (path.match(/^\/api\/orders\/[^/]+\/delivery-status$/) && method === 'PUT') {
+    const orderId = path.split('/')[3];
+    const order = db.orders.find(o => o.id === orderId);
+    if (!order) throw new Error('Order not found');
+
+    const now = new Date().toISOString();
+    order.deliveryStatus = body.deliveryStatus;
+    order.deliveryStatusUpdatedAt = now;
+
+    if (body.courierName !== undefined) order.courierName = body.courierName ? body.courierName.trim() : undefined;
+    if (body.trackingNumber !== undefined) order.trackingNumber = body.trackingNumber ? body.trackingNumber.trim() : undefined;
+    if (body.deliveryNotes !== undefined) order.deliveryNotes = body.deliveryNotes ? body.deliveryNotes.trim() : undefined;
+    if (body.estimatedDeliveryDate !== undefined) order.estimatedDeliveryDate = body.estimatedDeliveryDate || undefined;
+
+    if (body.deliveryStatus === 'delivered') {
+      order.orderStatus = 'delivered';
+      if (!order.completedAt) order.completedAt = now;
+    } else if (body.deliveryStatus === 'processing' || body.deliveryStatus === 'shipped' || body.deliveryStatus === 'out_for_delivery') {
+      if (order.orderStatus === 'placed') order.orderStatus = 'processing';
+    } else if (body.deliveryStatus === 'cancelled') {
+      order.orderStatus = 'cancelled';
+    }
+
+    const statusLabels: Record<string, string> = {
+      order_placed: 'Order Placed',
+      confirmed: 'Confirmed by Store',
+      processing: 'Packed & Processing',
+      shipped: 'Shipped (In Transit)',
+      out_for_delivery: 'Out for Delivery',
+      delivered: 'Delivered Successfully',
+      cancelled: 'Delivery Cancelled'
+    };
+
+    const label = statusLabels[body.deliveryStatus] || body.deliveryStatus;
+
+    if (!order.deliveryTimeline) order.deliveryTimeline = [];
+    order.deliveryTimeline.push({
+      status: body.deliveryStatus,
+      label,
+      updatedAt: now,
+      note: body.deliveryNotes,
+      courierName: body.courierName,
+      trackingNumber: body.trackingNumber,
+      updatedByRole: (currentUser?.role as any) || 'shopkeeper'
+    });
+
+    db.notifications.unshift({
+      id: `notif_del_${Date.now()}`,
+      recipientUserId: order.customerId,
+      title: `🚚 Order #${order.orderNumber}: ${label}`,
+      message: `Your order delivery status is now "${label}".${order.courierName ? ` Courier: ${order.courierName}.` : ''}${order.trackingNumber ? ` Tracking: ${order.trackingNumber}.` : ''}`,
+      type: 'order',
+      read: false,
+      createdAt: now
+    });
+
+    saveLocalDatabase(db);
+    return {
+      success: true,
+      message: `Delivery status updated to ${label}`,
       order
     } as unknown as T;
   }

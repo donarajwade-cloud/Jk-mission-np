@@ -560,71 +560,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
         )}
       </section>
 
-      {/* Participating Shops Showcase */}
-      <section className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 border-b border-slate-200 pb-4">
-          <div>
-            <div className="inline-flex items-center space-x-1.5 text-xs font-black text-amber-700 uppercase tracking-wider mb-1">
-              <Store className="w-3.5 h-3.5" />
-              <span>Verified Merchant Partners</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-950">
-              Participating Stores
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Support authentic local sellers from across Nepal with verified products.
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('shops')}
-            className="text-xs font-bold text-amber-800 hover:text-amber-950 flex items-center space-x-1"
-          >
-            <span>View All Registered Shops</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {shops.slice(0, 3).map((s) => (
-            <div
-              key={s.id}
-              className="bg-white rounded-3xl border border-slate-200/90 p-5 hover:border-amber-400 transition-all shadow-xs flex flex-col justify-between"
-            >
-              <div>
-                <img
-                  src={
-                    s.imageUrl ||
-                    'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
-                  }
-                  alt={s.name}
-                  className="w-full h-40 rounded-2xl object-cover mb-4"
-                />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 border border-amber-200">
-                    {s.district}
-                  </span>
-                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                    ★ {s.rating}
-                  </span>
-                </div>
-                <h3 className="font-bold text-slate-900 text-base">{s.name}</h3>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{s.description}</p>
-                <p className="text-xs text-slate-400 mt-2">{s.address}, {s.municipality}</p>
-              </div>
-
-              <div className="mt-5 pt-3 border-t border-slate-100">
-                <button
-                  onClick={() => onNavigate('products', s.id)}
-                  className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-amber-100 text-slate-800 text-xs font-bold transition-colors flex items-center justify-center space-x-1.5"
-                >
-                  <span>Explore Shop Items</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* How Shopping & Rewards Work (Clean 3-Step) */}
       <section className="bg-amber-50/50 py-12 sm:py-14 border-y border-amber-200/60">

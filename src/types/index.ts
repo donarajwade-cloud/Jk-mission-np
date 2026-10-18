@@ -123,6 +123,25 @@ export interface OrderItem {
   };
 }
 
+export type DeliveryStatus =
+  | 'order_placed'
+  | 'confirmed'
+  | 'processing'
+  | 'shipped'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'cancelled';
+
+export interface DeliveryTimelineStep {
+  status: DeliveryStatus;
+  label: string;
+  updatedAt: string;
+  note?: string;
+  updatedByRole?: 'shopkeeper' | 'admin' | 'system';
+  courierName?: string;
+  trackingNumber?: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -135,12 +154,20 @@ export interface Order {
   paymentReference?: string;
   paymentStatus: 'pending' | 'verified' | 'failed' | 'refunded';
   orderStatus: 'placed' | 'processing' | 'delivered' | 'completed' | 'cancelled';
+  deliveryStatus?: DeliveryStatus;
+  courierName?: string;
+  trackingNumber?: string;
+  deliveryNotes?: string;
+  estimatedDeliveryDate?: string;
+  deliveryStatusUpdatedAt?: string;
+  deliveryTimeline?: DeliveryTimelineStep[];
   shippingAddress: {
     fullName: string;
     mobile: string;
     street: string;
     city: string;
     district: string;
+    landmark?: string;
   };
   commissionProcessed: boolean;
   couponCode?: string;

@@ -6,6 +6,7 @@ import { Footer } from './components/layout/Footer.tsx';
 import { CartModal } from './components/common/CartModal.tsx';
 import { NotificationDrawer } from './components/common/NotificationDrawer.tsx';
 import { InvoiceModal } from './components/common/InvoiceModal.tsx';
+import { WhatsAppButton } from './components/common/WhatsAppButton.tsx';
 import { api } from './services/api.ts';
 import { Order } from './types/index.ts';
 
@@ -21,6 +22,7 @@ import { LoginPage } from './pages/public/LoginPage.tsx';
 import { RegisterCustomerPage } from './pages/public/RegisterCustomerPage.tsx';
 import { RegisterShopkeeperPage } from './pages/public/RegisterShopkeeperPage.tsx';
 import { CheckoutPage } from './pages/public/CheckoutPage.tsx';
+import { OrderConfirmationPage } from './pages/public/OrderConfirmationPage.tsx';
 import { PolicyPages } from './pages/public/PolicyPages.tsx';
 import { ContactPage } from './pages/public/ContactPage.tsx';
 
@@ -147,10 +149,17 @@ function MainApp() {
           <CheckoutPage
             onBack={() => navigateTo('products')}
             onOrderSuccess={(orderId) => {
-              handleOpenInvoice(orderId);
-              navigateTo('customer-orders');
+              navigateTo('order-confirmation', orderId);
             }}
             onNavigateLogin={() => navigateTo('login')}
+          />
+        );
+      case 'order-confirmation':
+        return (
+          <OrderConfirmationPage
+            orderId={viewParam}
+            onNavigate={navigateTo}
+            onViewInvoice={handleOpenInvoice}
           />
         );
       case 'login':
@@ -411,6 +420,9 @@ function MainApp() {
         onClose={() => setInvoiceModalOrder(null)}
         showAdminCommissionSnapshot={role === 'admin'}
       />
+
+      {/* Official WhatsApp Support Floating Action Button */}
+      <WhatsAppButton phoneNumber="+9779766133831" />
     </div>
   );
 }

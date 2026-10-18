@@ -308,6 +308,12 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                     <span className="text-[10px] font-bold capitalize text-amber-700">{o.orderStatus}</span>
                   </div>
                   <button
+                    onClick={() => onNavigate('order-confirmation', o.id)}
+                    className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs"
+                  >
+                    Track
+                  </button>
+                  <button
                     onClick={() => onViewInvoice(o.id)}
                     className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
                   >

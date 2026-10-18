@@ -145,6 +145,9 @@ export function parseCurrentLocation(): ParsedRoute {
   if (first === 'checkout') {
     return { view: 'checkout' };
   }
+  if (first === 'order-confirmation' || first === 'order-success' || first === 'track') {
+    return { view: 'order-confirmation', param: second || searchParams.get('id') || searchParams.get('orderId') || undefined };
+  }
   if (first === 'login') {
     const roleParam = searchParams.get('role') || second;
     if (roleParam === 'admin') return { view: 'admin-dashboard' };
@@ -194,6 +197,8 @@ export function getViewUrl(view: string, param?: string): string {
       return '/referral';
     case 'checkout':
       return '/checkout';
+    case 'order-confirmation':
+      return param ? `/order-confirmation/${encodeURIComponent(param)}` : '/order-confirmation';
     case 'login':
       if (param === 'admin') return '/admin';
       if (param === 'shopkeeper') return '/shopkeeper';

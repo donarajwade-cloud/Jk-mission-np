@@ -11,7 +11,8 @@ import {
   Shop,
   ProductCommissionSettings,
   CashbackCoupon,
-  CashbackCouponRule
+  CashbackCouponRule,
+  DeliveryStatus
 } from '../types/index.ts';
 
 import { handleLocalFallbackRequest } from './localStore.ts';
@@ -233,6 +234,21 @@ export const api = {
     request<{ success: boolean; message: string; order: Order }>(`/api/orders/${id}/refund`, {
       method: 'PUT',
       body: JSON.stringify({ reason })
+    }),
+
+  updateDeliveryStatus: (
+    id: string,
+    payload: {
+      deliveryStatus: DeliveryStatus;
+      courierName?: string;
+      trackingNumber?: string;
+      deliveryNotes?: string;
+      estimatedDeliveryDate?: string;
+    }
+  ) =>
+    request<{ success: boolean; message: string; order: Order }>(`/api/orders/${id}/delivery-status`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
     }),
 
   // Wallets & Withdrawals
