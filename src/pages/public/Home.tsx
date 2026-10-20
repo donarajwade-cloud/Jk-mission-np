@@ -116,7 +116,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
   const faqs = [
     {
       q: 'How do I shop and receive customer cashback?',
-      a: 'Simply choose any product from our verified merchant catalog, add it to your cart, and place your order. Once your delivery and order are completed, your eligible NPR cashback is directly and safely credited to your Customer Cashback Wallet.'
+      a: 'Simply choose any product from our verified merchant catalog, add it to your cart, and place your order. Once your delivery and order are completed, your eligible रु cashback is directly and safely credited to your Customer Cashback Wallet.'
     },
     {
       q: 'How does the 3-Level Referral Program work?',
@@ -148,7 +148,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
             </h1>
 
             <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-medium max-w-2xl mx-auto">
-              Discover authentic products from registered merchants, enjoy verified NPR cashback credited directly to your wallet, and earn 3-level team commissions on qualifying sales.
+              Discover authentic products from registered merchants, enjoy verified रु cashback credited directly to your wallet, and earn 3-level team commissions on qualifying sales.
             </p>
           </div>
 
@@ -193,7 +193,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
               </div>
               <div>
                 <p className="text-xs font-black text-slate-950">Real Cashback</p>
-                <p className="text-[11px] text-slate-500">Credited directly in NPR</p>
+                <p className="text-[11px] text-slate-500">Credited directly in रु</p>
               </div>
             </div>
 
@@ -322,7 +322,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
             </div>
             <div className="flex items-center space-x-2 text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 shrink-0">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Fast & Secure NPR System</span>
+              <span>Fast & Secure रु System</span>
             </div>
           </div>
 
@@ -402,7 +402,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
               Featured Products with Cashback
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Real pricing in NPR (रु) with transparent cashback displayed directly on each item card.
+              Real pricing in Nepali Currency (रु) with transparent cashback displayed directly on each item card.
             </p>
           </div>
 
@@ -584,7 +584,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onSelectProduct }) => {
               </div>
               <h3 className="text-base font-bold text-slate-900">1. Browse & Order</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Choose quality items from registered local merchants. Check the exact NPR cashback that will be returned to you.
+                Choose quality items from registered local merchants. Check the exact रु cashback that will be returned to you.
               </p>
             </div>
 

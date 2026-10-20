@@ -340,7 +340,7 @@ export const OrderConfirmationPage: React.FC<OrderConfirmationPageProps> = ({
                 </div>
               </div>
               <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-400 text-slate-950 self-start sm:self-auto">
-                Level {order.awardedCoupon.level} Tier Reward
+                Buyer 20% Cashback Coupon
               </span>
             </div>
 

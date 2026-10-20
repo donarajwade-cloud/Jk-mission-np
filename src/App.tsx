@@ -180,6 +180,7 @@ function MainApp() {
       case 'register-customer':
         return (
           <RegisterCustomerPage
+            initialSponsor={viewParam}
             onSuccess={() => navigateTo('customer-dashboard')}
             onNavigateLogin={() => navigateTo('login')}
           />
@@ -259,6 +260,7 @@ function MainApp() {
         return (
           <ShopkeeperPortalPage
             subView="products"
+            param={viewParam}
             onNavigate={navigateTo}
             onViewInvoice={handleOpenInvoice}
           />

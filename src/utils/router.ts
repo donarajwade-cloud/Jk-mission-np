@@ -157,13 +157,15 @@ export function parseCurrentLocation(): ParsedRoute {
   }
   if (first === 'register') {
     if (second === 'shopkeeper') return { view: 'register-shopkeeper' };
-    return { view: 'register-customer' };
+    const refCode = searchParams.get('ref') || searchParams.get('sponsor') || (second !== 'customer' ? second : undefined);
+    return { view: 'register-customer', param: refCode || undefined };
   }
   if (first === 'register-shopkeeper') {
     return { view: 'register-shopkeeper' };
   }
   if (first === 'register-customer') {
-    return { view: 'register-customer' };
+    const refCode = searchParams.get('ref') || searchParams.get('sponsor') || second;
+    return { view: 'register-customer', param: refCode || undefined };
   }
   if (first === 'policy' || first === 'policies') {
     const tab = searchParams.get('tab') || second || 'terms';
@@ -205,7 +207,7 @@ export function getViewUrl(view: string, param?: string): string {
       if (param === 'customer' || param === 'user') return '/user';
       return '/login';
     case 'register-customer':
-      return '/register/customer';
+      return param ? `/register-customer?ref=${encodeURIComponent(param)}` : '/register-customer';
     case 'register-shopkeeper':
       return '/register/shopkeeper';
     case 'policy':

@@ -1,13 +1,16 @@
 /**
- * Format currency in Nepalese Rupees (NPR).
+ * Format currency in Nepalese Rupees (रु).
  * Adheres to South Asian / Nepalese numbering standards where appropriate.
  */
-export function formatNPR(amount: number | undefined | null, prefix = 'NPR'): string {
+export function formatNPR(amount: number | undefined | null, prefix = 'रु'): string {
   if (amount === undefined || amount === null || isNaN(amount)) {
     return `${prefix} 0`;
   }
-  const rounded = Math.round(amount);
-  return `${prefix} ${rounded.toLocaleString('en-IN')}`;
+  const num = Number(amount);
+  const formatted = num % 1 === 0
+    ? num.toLocaleString('en-IN')
+    : num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${prefix} ${formatted}`;
 }
 
 /**

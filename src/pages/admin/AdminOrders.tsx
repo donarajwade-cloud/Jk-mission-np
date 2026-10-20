@@ -207,7 +207,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onViewInvoice }) => {
                   <th className="py-3 px-4">Customer</th>
                   <th className="py-3 px-4">Shipping Destination</th>
                   <th className="py-3 px-4">Payment</th>
-                  <th className="py-3 px-4 text-right">Total (NPR)</th>
+                  <th className="py-3 px-4 text-right">Total (रु)</th>
                   <th className="py-3 px-4">Delivery Status</th>
                   <th className="py-3 px-4">Commissions</th>
                   <th className="py-3 px-4 text-center">Fulfillment & Actions</th>

@@ -58,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               JK MISSION NEPAL
             </span>
             <span className="text-slate-400 text-[11px] hidden md:inline">
-              Smart Retail, Real Cashback & 3-Level Referral • Currency: NPR (रु)
+              Smart Retail, Real Cashback & 3-Level Referral • Currency: रु (नेपाली रूपैयाँ)
             </span>
             <a
               href="https://wa.me/9779766133831?text=Namaste%20JK%20Mission%20Nepal%2C%20I%20need%20support"
@@ -389,7 +389,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                               onClick={() => onNavigate('admin-coupons')}
                               className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-amber-50 hover:text-slate-900 font-medium"
                             >
-                              Cashback Coupons (3-Level)
+                              Customer Cashback Coupons (20%)
                             </button>
                             <button
                               onClick={() => onNavigate('admin-withdrawals')}

@@ -83,7 +83,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const allImages = [product.imageUrl, ...(product.galleryImages || [])].filter(Boolean);
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       <button
         onClick={onBack}
         className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
@@ -122,18 +122,14 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2 text-center text-[11px] text-slate-600">
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-              <ShieldCheck className="w-4 h-4 text-amber-500 mx-auto mb-1" />
-              <span>Verified Merchant</span>
+          <div className="grid grid-cols-2 gap-3 text-center text-xs text-slate-700">
+            <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/60 flex items-center justify-center space-x-2">
+              <Truck className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="font-bold">Nepal Express Delivery</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-              <Truck className="w-4 h-4 text-amber-500 mx-auto mb-1" />
-              <span>Nepal Shipping</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-              <CheckCircle className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
-              <span>Instant Cashback</span>
+            <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 flex items-center justify-center space-x-2">
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-bold">Instant Wallet Cashback</span>
             </div>
           </div>
         </div>
@@ -234,14 +230,29 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={handleAddToCart}
-              disabled={product.stockQuantity <= 0}
-              className="w-full py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 shadow-lg shadow-amber-300/40 hover:shadow-xl transition-all disabled:opacity-40"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Add to Cart ({formatNPR(product.finalSellingPriceNpr * quantity)})</span>
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleAddToCart}
+                disabled={product.stockQuantity <= 0}
+                className="flex-1 py-3.5 px-4 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 shadow-md shadow-amber-300/40 hover:shadow-lg transition-all disabled:opacity-40"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Add to Cart ({formatNPR(product.finalSellingPriceNpr * quantity)})</span>
+              </button>
+
+              {onProceedToCheckout && (
+                <button
+                  onClick={() => {
+                    addToCart(product, quantity);
+                    onProceedToCheckout();
+                  }}
+                  disabled={product.stockQuantity <= 0}
+                  className="flex-1 py-3.5 px-4 rounded-2xl bg-slate-950 hover:bg-slate-800 text-amber-300 font-black text-sm flex items-center justify-center space-x-2 shadow-md transition-all disabled:opacity-40"
+                >
+                  <span>Buy Now</span>
+                </button>
+              )}
+            </div>
 
             {addedNotice && (
               <p className="text-xs font-bold text-emerald-600 text-center animate-in fade-in">

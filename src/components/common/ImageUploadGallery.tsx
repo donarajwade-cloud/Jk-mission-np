@@ -343,23 +343,26 @@ export const ImageUploadGallery: React.FC<ImageUploadGalleryProps> = ({
                   alt={`Product angle ${idx + 1}`}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveGalleryImage(idx)}
-                    className="self-end p-1.5 rounded-lg bg-slate-900/80 text-white hover:bg-red-600 transition-colors shadow-sm"
-                    title="Delete Photo"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSetAsPrimary(idx)}
-                    className="w-full py-1 rounded-md bg-amber-400 text-slate-950 font-bold text-[10px] shadow-sm hover:bg-amber-300 transition-colors"
-                  >
-                    Make Main Cover
-                  </button>
-                </div>
+                
+                {/* Always-visible top-right delete button for phone & desktop users */}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveGalleryImage(idx)}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-slate-900/80 text-white hover:bg-red-600 active:scale-90 transition-all shadow-md z-10"
+                  title="Delete Photo"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Make Main Cover Button */}
+                <button
+                  type="button"
+                  onClick={() => handleSetAsPrimary(idx)}
+                  className="absolute bottom-2 left-2 right-2 py-1 px-1.5 rounded-lg bg-slate-900/80 hover:bg-amber-400 text-white hover:text-slate-950 font-bold text-[10px] shadow-md transition-all flex items-center justify-center space-x-1 backdrop-blur-xs"
+                >
+                  <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                  <span>Set as Main</span>
+                </button>
               </div>
             ))}
           </div>

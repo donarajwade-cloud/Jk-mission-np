@@ -33,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
             </span>
           </div>
           <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-4 gap-y-1 text-[11px] text-slate-500">
-            <span>Official Currency: NPR (रु)</span>
+            <span>Official Currency: रु (नेपाली रूपैयाँ)</span>
             <span>•</span>
             <span>15-Day Settlement Cycle</span>
             <span>•</span>
@@ -58,7 +58,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
                 JK Mission — Smart Retail Traditional Business
               </p>
               <p className="text-[11px] text-slate-900 font-semibold">
-                Smart Retail, Cashback & Referral Platform • Currency: NPR (रु)
+                Smart Retail, Cashback & Referral Platform • Currency: रु (नेपाली रूपैयाँ)
               </p>
             </div>
           </div>
@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
               <span>100% Genuine Retail</span>
             </span>
             <span className="bg-amber-300/80 px-2.5 py-1 rounded-lg border border-amber-500/30">
-              Currency: NPR (रु)
+              Currency: रु (नेपाली रूपैयाँ)
             </span>
             <span className="bg-amber-300/80 px-2.5 py-1 rounded-lg border border-amber-500/30">
               Direct Bank & eSewa Transfer
@@ -126,7 +126,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
 
               <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-amber-300 font-semibold">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Asia/Kathmandu (NPR)</span>
+                <span>Asia/Kathmandu (रु)</span>
               </span>
             </div>
           </div>
@@ -304,7 +304,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, currentView = 'home'
           </div>
           <div className="text-left md:text-right text-xs text-slate-500 space-y-1 shrink-0">
             <p className="font-semibold text-slate-400">15-Day Settlement Cycle</p>
-            <p className="text-[11px]">Minimum withdrawal: NPR 100 • Manual verified disbursements</p>
+            <p className="text-[11px]">Minimum withdrawal: रु 100 • Manual verified disbursements</p>
           </div>
         </div>
 

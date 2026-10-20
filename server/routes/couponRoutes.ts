@@ -101,17 +101,12 @@ router.get('/admin/rules', authenticateToken, requireRole('admin'), (req: Reques
   });
 });
 
-// Admin: Update 3-Level Cashback Coupon Rule settings
+// Admin: Update Customer 20% Cashback Coupon Rule settings
 router.put('/admin/rules', authenticateToken, requireRole('admin'), (req: Request, res: Response): void => {
   const {
     enabled,
     title,
-    level1Percentage,
-    level2Percentage,
-    level3Percentage,
-    level1MinSpendNpr,
-    level2MinSpendNpr,
-    level3MinSpendNpr,
+    discountPercentage,
     validityDays,
     minOrderToApplyNpr,
     maxDiscountNpr
@@ -121,15 +116,10 @@ router.put('/admin/rules', authenticateToken, requireRole('admin'), (req: Reques
     data.cashbackCouponRule = {
       id: data.cashbackCouponRule?.id || 'rule_cb_default',
       enabled: enabled !== undefined ? !!enabled : true,
-      title: title || '3-Level Purchase Cashback Coupon Engine',
-      level1Percentage: Number(level1Percentage) >= 0 ? Number(level1Percentage) : 10,
-      level2Percentage: Number(level2Percentage) >= 0 ? Number(level2Percentage) : 15,
-      level3Percentage: Number(level3Percentage) >= 0 ? Number(level3Percentage) : 20,
-      level1MinSpendNpr: Number(level1MinSpendNpr) >= 0 ? Number(level1MinSpendNpr) : 0,
-      level2MinSpendNpr: Number(level2MinSpendNpr) >= 0 ? Number(level2MinSpendNpr) : 1000,
-      level3MinSpendNpr: Number(level3MinSpendNpr) >= 0 ? Number(level3MinSpendNpr) : 2500,
+      title: title || 'Customer 20% Purchase Cashback Coupon Engine',
+      discountPercentage: Number(discountPercentage) > 0 ? Number(discountPercentage) : 20,
       validityDays: Number(validityDays) > 0 ? Number(validityDays) : 30,
-      minOrderToApplyNpr: Number(minOrderToApplyNpr) >= 0 ? Number(minOrderToApplyNpr) : 200,
+      minOrderToApplyNpr: Number(minOrderToApplyNpr) >= 0 ? Number(minOrderToApplyNpr) : 100,
       maxDiscountNpr: maxDiscountNpr ? Number(maxDiscountNpr) : 1000,
       updatedAt: new Date().toISOString()
     };
@@ -139,7 +129,7 @@ router.put('/admin/rules', authenticateToken, requireRole('admin'), (req: Reques
       action: 'UPDATE_COUPON_RULE',
       actorUserId: req.user!.userId,
       actorRole: 'admin',
-      details: `Updated 3-level coupon rule: L1=${level1Percentage}%, L2=${level2Percentage}%, L3=${level3Percentage}%`,
+      details: `Updated Customer Cashback Coupon rule: discount=${data.cashbackCouponRule.discountPercentage}% to buyer`,
       entityType: 'settings',
       entityId: data.cashbackCouponRule.id,
       timestamp: new Date().toISOString()
@@ -150,7 +140,7 @@ router.put('/admin/rules', authenticateToken, requireRole('admin'), (req: Reques
 
   res.json({
     success: true,
-    message: '3-Level Cashback Coupon settings updated successfully',
+    message: 'Customer 20% Cashback Coupon settings updated successfully',
     rule: result
   });
 });

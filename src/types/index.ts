@@ -175,7 +175,7 @@ export interface Order {
   awardedCoupon?: {
     code: string;
     discountPercentage: number;
-    level: 1 | 2 | 3;
+    level?: number;
   };
   createdAt: string;
   completedAt?: string;
@@ -186,28 +186,29 @@ export interface CashbackCouponRule {
   id: string;
   enabled: boolean;
   title: string;
-  level1Percentage: number; // e.g. 10%
-  level2Percentage: number; // e.g. 15%
-  level3Percentage: number; // e.g. 20%
-  level1MinSpendNpr: number; // min order amount to qualify for level 1 (e.g. 0)
-  level2MinSpendNpr: number; // min order amount to qualify for level 2 (e.g. 1000)
-  level3MinSpendNpr: number; // min order amount to qualify for level 3 (e.g. 2500)
+  discountPercentage: number; // 20% flat cashback coupon for product buyer
   validityDays: number; // e.g. 30 days
   minOrderToApplyNpr: number; // min order total to redeem this coupon (e.g. 200)
   maxDiscountNpr?: number; // max discount cap (e.g. 1000)
   updatedAt: string;
+  level1Percentage?: number;
+  level2Percentage?: number;
+  level3Percentage?: number;
+  level1MinSpendNpr?: number;
+  level2MinSpendNpr?: number;
+  level3MinSpendNpr?: number;
 }
 
 export interface CashbackCoupon {
   id: string;
-  code: string; // e.g. "JKMCB-L1-82914"
+  code: string; // e.g. "JKMCB-20-82914"
   userId: string;
   userName: string;
   userMobile: string;
   sourceOrderId: string;
   sourceOrderNumber: string;
-  level: 1 | 2 | 3;
-  discountPercentage: number;
+  level?: number;
+  discountPercentage: number; // 20%
   minOrderAmountNpr: number;
   maxDiscountNpr?: number;
   status: 'available' | 'used' | 'expired';

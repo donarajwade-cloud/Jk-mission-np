@@ -51,7 +51,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
             Products with Real Cashback
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Shop directly from registered Nepali merchants in NPR currency.
+            Shop directly from registered Nepali merchants in Nepali currency (रु).
           </p>
         </div>
 

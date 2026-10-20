@@ -325,15 +325,10 @@ function initDefaultSeed(): DatabaseSchema {
     cashbackCouponRule: {
       id: 'rule_cb_default',
       enabled: true,
-      title: '3-Level Purchase Cashback Coupon Engine',
-      level1Percentage: 10,
-      level2Percentage: 15,
-      level3Percentage: 20,
-      level1MinSpendNpr: 0,
-      level2MinSpendNpr: 1000,
-      level3MinSpendNpr: 2500,
+      title: 'Customer 20% Purchase Cashback Coupon Engine',
+      discountPercentage: 20,
       validityDays: 30,
-      minOrderToApplyNpr: 200,
+      minOrderToApplyNpr: 100,
       maxDiscountNpr: 1000,
       updatedAt: now
     },
@@ -499,19 +494,14 @@ export function loadDatabase(): DatabaseSchema {
           migrated = true;
         }
       }
-      if (!dbState.cashbackCouponRule) {
+      if (!dbState.cashbackCouponRule || !dbState.cashbackCouponRule.discountPercentage) {
         dbState.cashbackCouponRule = {
           id: 'rule_cb_default',
           enabled: true,
-          title: '3-Level Purchase Cashback Coupon Engine',
-          level1Percentage: 10,
-          level2Percentage: 15,
-          level3Percentage: 20,
-          level1MinSpendNpr: 0,
-          level2MinSpendNpr: 1000,
-          level3MinSpendNpr: 2500,
+          title: 'Customer 20% Purchase Cashback Coupon Engine',
+          discountPercentage: 20,
           validityDays: 30,
-          minOrderToApplyNpr: 200,
+          minOrderToApplyNpr: 100,
           maxDiscountNpr: 1000,
           updatedAt: new Date().toISOString()
         };

@@ -10,12 +10,14 @@ import { RegisterShopkeeperPage } from '../public/RegisterShopkeeperPage.tsx';
 
 interface ShopkeeperPortalPageProps {
   subView?: string;
+  param?: string;
   onNavigate: (view: string, param?: string) => void;
   onViewInvoice?: (id: string) => void;
 }
 
 export const ShopkeeperPortalPage: React.FC<ShopkeeperPortalPageProps> = ({
   subView = 'dashboard',
+  param,
   onNavigate,
   onViewInvoice
 }) => {
@@ -30,7 +32,8 @@ export const ShopkeeperPortalPage: React.FC<ShopkeeperPortalPageProps> = ({
   if (role === 'shopkeeper' && user) {
     switch (subView) {
       case 'products':
-        return <ShopkeeperProducts />;
+      case 'products-create':
+        return <ShopkeeperProducts initialCreateMode={subView === 'products-create' || param === 'create'} />;
       case 'inventory':
         return <ShopkeeperInventory />;
       case 'orders':

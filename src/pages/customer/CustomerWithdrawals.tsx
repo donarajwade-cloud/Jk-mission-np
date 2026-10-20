@@ -129,7 +129,7 @@ export const CustomerWithdrawals: React.FC = () => {
           <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-extrabold text-slate-900 text-sm">Disbursement Details</h3>
-              <span className="text-[10px] text-slate-400 font-bold">Min: NPR 100</span>
+              <span className="text-[10px] text-slate-400 font-bold">Min: रु 100</span>
             </div>
 
             {error && (
@@ -148,7 +148,7 @@ export const CustomerWithdrawals: React.FC = () => {
             <form onSubmit={handleWithdrawalSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  Withdrawal Amount (NPR)
+                  Withdrawal Amount (रु)
                 </label>
                 <input
                   type="number"
@@ -158,7 +158,7 @@ export const CustomerWithdrawals: React.FC = () => {
                   required
                   value={amountNpr}
                   onChange={(e) => setAmountNpr(e.target.value)}
-                  placeholder="Min 100"
+                  placeholder="Min रु 100"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:border-amber-400"
                 />
               </div>

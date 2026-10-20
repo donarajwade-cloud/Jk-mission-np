@@ -94,26 +94,13 @@ router.post('/', authenticateToken, requireRole('customer'), (req: Request, res:
 
     const finalPayableNpr = Math.max(0, totalNpr - appliedCouponDiscountNpr);
 
-    // Automatic 3-Level Next Purchase Cashback Coupon Generator
-    let awardedCouponInfo: { code: string; discountPercentage: number; level: 1 | 2 | 3 } | undefined = undefined;
+    // Automatic 20% Next Purchase Cashback Coupon Awarded exclusively to product buyer
+    let awardedCouponInfo: { code: string; discountPercentage: number; level?: 1 | 2 | 3 } | undefined = undefined;
     const rule = data.cashbackCouponRule;
     if (rule && rule.enabled !== false) {
-      let level: 1 | 2 | 3 = 1;
-      let discountPercentage = rule.level1Percentage || 10;
-
-      if (totalNpr >= (rule.level3MinSpendNpr || 2500)) {
-        level = 3;
-        discountPercentage = rule.level3Percentage || 20;
-      } else if (totalNpr >= (rule.level2MinSpendNpr || 1000)) {
-        level = 2;
-        discountPercentage = rule.level2Percentage || 15;
-      } else {
-        level = 1;
-        discountPercentage = rule.level1Percentage || 10;
-      }
-
+      const discountPercentage = 20; // Exactly 20% cashback coupon to customer buying product
       const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
-      const newCode = `JKMCB-L${level}-${randomSuffix}`;
+      const newCode = `JKM-CB20-${randomSuffix}`;
       const validityDays = rule.validityDays || 30;
       const expiresAt = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -125,9 +112,8 @@ router.post('/', authenticateToken, requireRole('customer'), (req: Request, res:
         userMobile: req.user!.mobile,
         sourceOrderId: orderId,
         sourceOrderNumber: orderNumber,
-        level,
         discountPercentage,
-        minOrderAmountNpr: rule.minOrderToApplyNpr || 200,
+        minOrderAmountNpr: rule.minOrderToApplyNpr || 100,
         maxDiscountNpr: rule.maxDiscountNpr || 1000,
         status: 'available',
         expiresAt,
@@ -139,15 +125,14 @@ router.post('/', authenticateToken, requireRole('customer'), (req: Request, res:
 
       awardedCouponInfo = {
         code: newCode,
-        discountPercentage,
-        level
+        discountPercentage
       };
 
       data.notifications.push({
         id: `notif_cpn_${Date.now()}`,
         recipientUserId: req.user!.userId,
-        title: '🎟️ Next Purchase Cashback Coupon Awarded!',
-        message: `Your order #${orderNumber} unlocked a Level ${level} Cashback Coupon (${discountPercentage}% OFF)! Use coupon code "${newCode}" on your next purchase (valid ${validityDays} days).`,
+        title: '🎟️ 20% Customer Cashback Coupon Awarded!',
+        message: `Your product purchase #${orderNumber} unlocked an exclusive 20% OFF Cashback Coupon! Use coupon code "${newCode}" on your next purchase (valid ${validityDays} days).`,
         type: 'cashback',
         read: false,
         createdAt: now

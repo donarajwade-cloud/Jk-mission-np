@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../services/api.ts';
 import { formatNPR, formatNepaliDate } from '../../utils/format.ts';
 import { WalletCardUI } from '../../components/common/WalletCardUI.tsx';
+import { TransactionHistoryCardView, TransactionCardItem } from '../../components/common/TransactionHistoryCardView.tsx';
 import { 
   TrendingUp, 
   CreditCard, 
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export const ShopkeeperWallet: React.FC = () => {
-  const { user } = useAuth();
+  const { user, shop } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -91,6 +92,18 @@ export const ShopkeeperWallet: React.FC = () => {
   const commissions = data?.commissions || [];
   const withdrawals = data?.withdrawals || [];
 
+  // Map into standalone floating card items matching screenshot UI (Zero demo data)
+  const commissionCardItems: TransactionCardItem[] = commissions.map((c: any) => ({
+    id: String(c.id),
+    title: c.productName || 'Merchant Sales Commission',
+    category: 'grocery' as const,
+    date: c.createdAt,
+    amountNpr: c.amountNpr,
+    type: 'credit' as const,
+    orderNumber: c.orderNumber,
+    status: 'Credited'
+  }));
+
   return (
     <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Page Header */}
@@ -115,7 +128,7 @@ export const ShopkeeperWallet: React.FC = () => {
             type="shopkeeper"
             title="Available Sales Commission"
             subtitle="Commercial Merchant Account"
-            cardHolderName={user?.name || 'VERIFIED MERCHANT'}
+            cardHolderName={user?.name || shop?.name || 'STORE PARTNER'}
             accountOrId={user?.mobile || '98XXXXXXXX'}
             balanceNpr={wallet?.availableCommissionNpr || 0}
             totalEarnedNpr={wallet?.totalEarnedNpr || 0}
@@ -131,7 +144,7 @@ export const ShopkeeperWallet: React.FC = () => {
                 <CreditCard className="w-4 h-4 text-slate-700" />
                 <h3 className="font-extrabold text-slate-900 text-sm">Request Merchant Disbursement</h3>
               </div>
-              <span className="text-[10px] font-bold text-slate-400">Min NPR 100</span>
+              <span className="text-[10px] font-bold text-slate-400">Min: रु 100</span>
             </div>
 
             {error && (
@@ -149,14 +162,14 @@ export const ShopkeeperWallet: React.FC = () => {
 
             <form onSubmit={handleWithdrawalSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Disbursement Amount (NPR)</label>
+                <label className="block font-bold text-slate-700 mb-1">Disbursement Amount (रु)</label>
                 <input
                   type="number"
                   min="100"
                   required
                   value={amountNpr}
                   onChange={(e) => setAmountNpr(e.target.value)}
-                  placeholder="e.g. 500"
+                  placeholder="e.g. रु 500"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:border-amber-400"
                 />
               </div>
@@ -273,52 +286,13 @@ export const ShopkeeperWallet: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Sales Commission Ledger & Withdrawal History */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-base">Sales Commission Ledger</h3>
-                <p className="text-xs text-slate-400">Permanent itemized records of merchant commission credits</p>
-              </div>
-              <span className="text-[10px] bg-blue-50 text-blue-800 font-bold px-2.5 py-1 rounded-full border border-blue-200">
-                {commissions.length} Credits
-              </span>
-            </div>
-
-            {commissions.length === 0 ? (
-              <div className="p-12 text-center text-xs text-slate-400 space-y-2">
-                <Store className="w-8 h-8 mx-auto text-slate-300" />
-                <p>No sales commissions credited yet. Product sales will create permanent records here.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100 text-xs">
-                {commissions.map((c: any) => (
-                  <div key={c.id} className="py-3.5 flex justify-between items-center hover:bg-slate-50/60 px-2 rounded-xl transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold shrink-0">
-                        <ArrowDownRight className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">{c.productName}</p>
-                        <p className="text-[10px] text-slate-400">
-                          {formatNepaliDate(c.createdAt)} • Order #{c.orderNumber}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-black text-blue-700 text-sm block">
-                        +{formatNPR(c.amountNpr)}
-                      </span>
-                      <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
-                        Credited
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Right Column: Transaction History Card View matching Screenshot UI */}
+        <div className="lg:col-span-7 bg-slate-50/60 p-4 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs">
+          <TransactionHistoryCardView
+            title="Merchant Sales Commission History"
+            showCloseButton={false}
+            transactions={commissionCardItems}
+          />
         </div>
       </div>
     </div>

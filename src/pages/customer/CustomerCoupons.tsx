@@ -71,7 +71,7 @@ export const CustomerCoupons: React.FC<CustomerCouponsProps> = ({ onNavigateShop
             My Cashback Coupons
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Every time you purchase a product, you unlock a 3-Level Cashback Coupon to save on your next purchase!
+            Every time you purchase a product, you unlock an exclusive 20% Cashback Coupon to save on your next purchase! Sirf product khareedne wale customer ko 20% cashback coupon milta hai.
           </p>
         </div>
 
@@ -86,39 +86,48 @@ export const CustomerCoupons: React.FC<CustomerCouponsProps> = ({ onNavigateShop
         )}
       </div>
 
-      {/* 3-Level Benefits Explainer Banner */}
-      <div className="bg-linear-to-r from-slate-950 via-slate-900 to-amber-950 text-white p-6 sm:p-7 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+      {/* Exclusive 20% Buyer Cashback Coupon Banner */}
+      <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 text-white p-6 sm:p-7 rounded-3xl border border-slate-800 shadow-xl space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black">
-              <Gift className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black">
+              <Gift className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">How 3-Level Cashback Coupons Work</h2>
-              <p className="text-xs text-slate-400">Automatic percentage discount vouchers generated on every product purchase</p>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-base sm:text-lg font-extrabold text-white">
+                  Exclusive 20% Customer Cashback Coupon
+                </h2>
+                <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[10px] font-black uppercase tracking-wider">
+                  Every Purchase
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Buy any product on JK Mission and automatically receive a guaranteed 20% OFF coupon for your next order!
+              </p>
             </div>
           </div>
-          <div className="text-xs font-mono text-amber-400 bg-amber-950/60 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-2">
+          <div className="text-xs font-mono text-amber-400 bg-amber-950/60 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-2 shrink-0">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Admin Automatic Engine Active</span>
+            <span>Flat 20% Buyer Discount</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs text-slate-300">
           <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <span className="text-[10px] uppercase font-bold text-amber-400">Level 1 Coupon</span>
-            <p className="text-xl font-black text-white">{rule?.level1Percentage || 10}% OFF</p>
-            <p className="text-[11px] text-slate-400">Orders from NPR {rule?.level1MinSpendNpr || 0}+</p>
+            <span className="text-[10px] uppercase font-bold text-amber-400">Step 1. Purchase</span>
+            <p className="text-sm font-bold text-white">Buy Any Store Product</p>
+            <p className="text-[11px] text-slate-400">Place an order for genuine groceries, teas, or essentials</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-amber-500/30 space-y-1">
-            <span className="text-[10px] uppercase font-bold text-amber-300">Level 2 Coupon</span>
-            <p className="text-xl font-black text-amber-300">{rule?.level2Percentage || 15}% OFF</p>
-            <p className="text-[11px] text-slate-400">Orders from NPR {formatNPR(rule?.level2MinSpendNpr || 1000)}+</p>
+            <span className="text-[10px] uppercase font-bold text-amber-300">Step 2. Instant Reward</span>
+            <p className="text-sm font-bold text-amber-300">Get 20% OFF Coupon</p>
+            <p className="text-[11px] text-slate-400">Automatic 20% coupon code generated in your wallet</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-amber-400/50 space-y-1">
-            <span className="text-[10px] uppercase font-bold text-amber-400">Level 3 Coupon</span>
-            <p className="text-xl font-black text-amber-400">{rule?.level3Percentage || 20}% OFF</p>
-            <p className="text-[11px] text-slate-400">Orders from NPR {formatNPR(rule?.level3MinSpendNpr || 2500)}+</p>
+            <span className="text-[10px] uppercase font-bold text-amber-400">Step 3. Save</span>
+            <p className="text-sm font-bold text-amber-400">Redeem on Next Order</p>
+            <p className="text-[11px] text-slate-400">Apply coupon at checkout for direct 20% savings</p>
           </div>
         </div>
       </div>
@@ -197,16 +206,10 @@ export const CustomerCoupons: React.FC<CustomerCouponsProps> = ({ onNavigateShop
                     : 'bg-slate-50/80 border-slate-200 opacity-80'
                 }`}
               >
-                {/* Level Ribbon */}
+                {/* Buyer 20% Cashback Coupon Badge */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    coupon.level === 3
-                      ? 'bg-purple-100 text-purple-900 border border-purple-200'
-                      : coupon.level === 2
-                      ? 'bg-blue-100 text-blue-900 border border-blue-200'
-                      : 'bg-amber-100 text-amber-900 border border-amber-200'
-                  }`}>
-                    Level {coupon.level} Tier
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-950 border border-amber-300">
+                    Buyer 20% Cashback Coupon
                   </span>
 
                   <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
@@ -229,8 +232,8 @@ export const CustomerCoupons: React.FC<CustomerCouponsProps> = ({ onNavigateShop
                     <span className="text-xs font-black uppercase text-amber-700">Cashback OFF</span>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Min order: NPR {coupon.minOrderAmountNpr}
-                    {coupon.maxDiscountNpr ? ` • Max discount: NPR ${coupon.maxDiscountNpr}` : ''}
+                    Min order: रु {coupon.minOrderAmountNpr}
+                    {coupon.maxDiscountNpr ? ` • Max discount: रु ${coupon.maxDiscountNpr}` : ''}
                   </p>
                 </div>
 
@@ -275,7 +278,7 @@ export const CustomerCoupons: React.FC<CustomerCouponsProps> = ({ onNavigateShop
                   )}
                   {coupon.discountAppliedNpr && coupon.discountAppliedNpr > 0 && (
                     <p className="text-emerald-700 font-bold text-[11px]">
-                      Saved: NPR {coupon.discountAppliedNpr}
+                      Saved: रु {coupon.discountAppliedNpr}
                     </p>
                   )}
                 </div>

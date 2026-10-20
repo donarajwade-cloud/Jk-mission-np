@@ -148,9 +148,9 @@ export const AdminProducts: React.FC = () => {
     if (!selectedProduct) return;
     if (!isValidConfiguration) {
       if (isNegativeMargin) {
-        setConfigModalError(`Selling price (NPR ${sellingPrice}) cannot be lower than cost price (NPR ${costPrice}).`);
+        setConfigModalError(`Selling price (रु ${sellingPrice}) cannot be lower than cost price (रु ${costPrice}).`);
       } else if (isOverAllocated) {
-        setConfigModalError(`Total distribution (NPR ${totalPromisedDistributionNpr}) exceeds gross margin (NPR ${grossMargin}) by NPR ${totalPromisedDistributionNpr - grossMargin}. Adjust your figures.`);
+        setConfigModalError(`Total distribution (रु ${totalPromisedDistributionNpr}) exceeds gross margin (रु ${grossMargin}) by रु ${totalPromisedDistributionNpr - grossMargin}. Adjust your figures.`);
       } else if (isReferralOver100) {
         setConfigModalError(`Referral tier percentages total ${Number(level1Percentage) + Number(level2Percentage) + Number(level3Percentage)}%, which exceeds 100%.`);
       } else {
@@ -185,7 +185,7 @@ export const AdminProducts: React.FC = () => {
       if (res.success) {
         setFeedbackMsg({
           type: 'success',
-          text: `Product "${selectedProduct.name}" approved with selling price NPR ${sellingPrice} and commissions saved!`
+          text: `Product "${selectedProduct.name}" approved with selling price रु ${sellingPrice} and commissions saved!`
         });
         setConfigModalOpen(false);
         // Refresh product in state and reload
@@ -276,7 +276,7 @@ export const AdminProducts: React.FC = () => {
       return;
     }
     if (selling < cost) {
-      setEditError(`Selling price (NPR ${selling}) cannot be less than cost price (NPR ${cost})`);
+      setEditError(`Selling price (रु ${selling}) cannot be less than cost price (रु ${cost})`);
       return;
     }
 
@@ -751,7 +751,7 @@ export const AdminProducts: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-slate-700 text-[11px] font-bold block mb-1">
-                    Authorized Selling Price (NPR):
+                    Authorized Selling Price (रु):
                   </label>
                   <input
                     type="number"
@@ -788,7 +788,7 @@ export const AdminProducts: React.FC = () => {
                       onChange={(e) => setCustomerCashbackType(e.target.value as any)}
                       className="px-2.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-bold"
                     >
-                      <option value="fixed">Fixed NPR</option>
+                      <option value="fixed">Fixed (रु)</option>
                       <option value="percentage">% of Price</option>
                     </select>
                     <input
@@ -819,7 +819,7 @@ export const AdminProducts: React.FC = () => {
                       onChange={(e) => setShopkeeperCommissionType(e.target.value as any)}
                       className="px-2.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-bold"
                     >
-                      <option value="fixed">Fixed NPR</option>
+                      <option value="fixed">Fixed (रु)</option>
                       <option value="percentage">% of Price</option>
                     </select>
                     <input
@@ -851,7 +851,7 @@ export const AdminProducts: React.FC = () => {
                       onChange={(e) => setReferralPoolType(e.target.value as any)}
                       className="px-2.5 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-bold"
                     >
-                      <option value="fixed">Fixed NPR</option>
+                      <option value="fixed">Fixed (रु)</option>
                       <option value="percentage">% of Margin</option>
                     </select>
                     <input
@@ -918,7 +918,7 @@ export const AdminProducts: React.FC = () => {
 
                 {/* 4. Company Share */}
                 <div className="p-4 rounded-2xl border border-slate-200 space-y-2 bg-white shadow-2xs">
-                  <span className="font-extrabold text-slate-900 block">4. Company Share (NPR)</span>
+                  <span className="font-extrabold text-slate-900 block">4. Company Share (रु)</span>
                   <input
                     type="number"
                     min="0"
@@ -931,7 +931,7 @@ export const AdminProducts: React.FC = () => {
 
                 {/* 5. Permitted Expenses */}
                 <div className="p-4 rounded-2xl border border-slate-200 space-y-2 bg-white shadow-2xs">
-                  <span className="font-extrabold text-slate-900 block">5. Permitted Expenses (NPR)</span>
+                  <span className="font-extrabold text-slate-900 block">5. Permitted Expenses (रु)</span>
                   <input
                     type="number"
                     min="0"
@@ -956,7 +956,7 @@ export const AdminProducts: React.FC = () => {
                   <div className="flex items-center space-x-1.5">
                     <span className="text-[10px] font-bold text-slate-500">Allocated / Margin:</span>
                     <span className="font-black text-xs sm:text-sm font-mono px-2 py-0.5 rounded-lg bg-white border border-slate-200">
-                      {totalPromisedDistributionNpr} / {grossMargin} NPR
+                      {totalPromisedDistributionNpr} / {grossMargin} रु
                     </span>
                   </div>
                 </div>
@@ -987,7 +987,7 @@ export const AdminProducts: React.FC = () => {
                     {isOverAllocated && (
                       <p className="text-red-700 font-bold flex items-center gap-1">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                        <span>Exceeds margin by NPR {totalPromisedDistributionNpr - grossMargin}!</span>
+                        <span>Exceeds margin by रु {totalPromisedDistributionNpr - grossMargin}!</span>
                       </p>
                     )}
                     {isReferralOver100 && (
@@ -999,7 +999,7 @@ export const AdminProducts: React.FC = () => {
                     {isValidConfiguration && (
                       <p className="text-emerald-800 font-bold flex items-center gap-1">
                         <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                        <span>Balanced: Distribution fits within margin (Buffer: NPR {grossMargin - totalPromisedDistributionNpr})</span>
+                        <span>Balanced: Distribution fits within margin (Buffer: रु {grossMargin - totalPromisedDistributionNpr})</span>
                       </p>
                     )}
                   </div>
@@ -1152,7 +1152,7 @@ export const AdminProducts: React.FC = () => {
                   {/* Pricing & Gross Margin Calculation Grid */}
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                     <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
-                      Financial Unit Economics (NPR)
+                      Financial Unit Economics (रु)
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>

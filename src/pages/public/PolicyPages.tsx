@@ -18,7 +18,7 @@ export const PolicyPages: React.FC<PolicyPagesProps> = ({ initialTab = 'terms' }
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+    <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       <div>
         <span className="text-xs font-black text-amber-700 uppercase tracking-wider">
           Legal & Compliance
@@ -63,7 +63,7 @@ export const PolicyPages: React.FC<PolicyPagesProps> = ({ initialTab = 'terms' }
             </p>
             <h3 className="font-bold text-slate-800 text-sm">A. Nature of Platform</h3>
             <p>
-              JK Mission Nepal is an online smart retail marketplace connecting verified independent Nepali merchants with customers. All transactions, pricing, and commissions are denominated in Nepalese Rupees (NPR).
+              JK Mission Nepal is an online smart retail marketplace connecting verified independent Nepali merchants with customers. All transactions, pricing, and commissions are denominated in Nepalese Rupees (रु).
             </p>
             <h3 className="font-bold text-slate-800 text-sm">B. Role-Based Access</h3>
             <p>

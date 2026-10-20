@@ -113,7 +113,7 @@ export const AdminSettings: React.FC = () => {
           <h3 className="font-bold text-slate-900 text-sm mb-3">Withdrawal & Settlement Limits</h3>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Min Withdrawal (NPR)</label>
+              <label className="block font-bold text-slate-700 mb-1">Min Withdrawal (रु)</label>
               <input
                 type="number"
                 value={settings.minWithdrawalNpr}
@@ -122,7 +122,7 @@ export const AdminSettings: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Max Withdrawal (NPR)</label>
+              <label className="block font-bold text-slate-700 mb-1">Max Withdrawal (रु)</label>
               <input
                 type="number"
                 value={settings.maxWithdrawalNpr}

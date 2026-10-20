@@ -320,15 +320,10 @@ const DEFAULT_SEED_DATA: LocalDatabaseState = {
   cashbackCouponRule: {
     id: 'rule_cb_default',
     enabled: true,
-    title: '3-Level Purchase Cashback Coupon Engine',
-    level1Percentage: 10,
-    level2Percentage: 15,
-    level3Percentage: 20,
-    level1MinSpendNpr: 0,
-    level2MinSpendNpr: 1000,
-    level3MinSpendNpr: 2500,
+    title: 'Customer 20% Purchase Cashback Coupon Engine',
+    discountPercentage: 20,
     validityDays: 30,
-    minOrderToApplyNpr: 200,
+    minOrderToApplyNpr: 100,
     maxDiscountNpr: 1000,
     updatedAt: new Date().toISOString()
   },
@@ -524,19 +519,14 @@ function getLocalDatabase(): LocalDatabaseState {
     parsed.shopkeeperLedger = parsed.shopkeeperLedger || [];
     parsed.orders = parsed.orders || [];
     parsed.coupons = parsed.coupons || [];
-    if (!parsed.cashbackCouponRule) {
+    if (!parsed.cashbackCouponRule || !parsed.cashbackCouponRule.discountPercentage) {
       parsed.cashbackCouponRule = {
         id: 'rule_cb_default',
         enabled: true,
-        title: '3-Level Purchase Cashback Coupon Engine',
-        level1Percentage: 10,
-        level2Percentage: 15,
-        level3Percentage: 20,
-        level1MinSpendNpr: 0,
-        level2MinSpendNpr: 1000,
-        level3MinSpendNpr: 2500,
+        title: 'Customer 20% Purchase Cashback Coupon Engine',
+        discountPercentage: 20,
         validityDays: 30,
-        minOrderToApplyNpr: 200,
+        minOrderToApplyNpr: 100,
         maxDiscountNpr: 1000,
         updatedAt: new Date().toISOString()
       };
@@ -854,7 +844,7 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
       id: `notif_prodsub_${Date.now()}`,
       recipientUserId: 'user_admin_1',
       title: '📦 New Product Submission Awaiting Approval',
-      message: `${newProduct.shopName} submitted a new product "${newProduct.name}" at proposed price NPR ${newProduct.proposedSellingPriceNpr}. Please configure commissions and approve.`,
+      message: `${newProduct.shopName} submitted a new product "${newProduct.name}" at proposed price रु ${newProduct.proposedSellingPriceNpr}. Please configure commissions and approve.`,
       type: 'product',
       read: false,
       createdAt: now
@@ -1000,24 +990,13 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
 
     const finalPayableNpr = Math.max(0, totalAmount - appliedCouponDiscountNpr);
 
-    // Automatic 3-Level Cashback Coupon award
-    let awardedCouponInfo: { code: string; discountPercentage: number; level: 1 | 2 | 3 } | undefined = undefined;
+    // Automatic 20% Cashback Coupon award to the customer who purchased the product
+    let awardedCouponInfo: { code: string; discountPercentage: number; level?: number } | undefined = undefined;
     const rule = db.cashbackCouponRule;
     if (rule && rule.enabled !== false) {
-      let level: 1 | 2 | 3 = 1;
-      let discountPercentage = rule.level1Percentage || 10;
-      if (totalAmount >= (rule.level3MinSpendNpr || 2500)) {
-        level = 3;
-        discountPercentage = rule.level3Percentage || 20;
-      } else if (totalAmount >= (rule.level2MinSpendNpr || 1000)) {
-        level = 2;
-        discountPercentage = rule.level2Percentage || 15;
-      } else {
-        level = 1;
-        discountPercentage = rule.level1Percentage || 10;
-      }
+      const discountPercentage = 20; // Exactly 20% cashback coupon to the customer who buys the product
       const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
-      const newCode = `JKMCB-L${level}-${randomSuffix}`;
+      const newCode = `JKM-CB20-${randomSuffix}`;
       const validityDays = rule.validityDays || 30;
       const expiresAt = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString();
       const newCoupon = {
@@ -1028,9 +1007,8 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
         userMobile: currentUser?.mobile || body.shippingAddress?.mobile || '+9779800000000',
         sourceOrderId: orderId,
         sourceOrderNumber: orderNumber,
-        level,
-        discountPercentage,
-        minOrderAmountNpr: rule.minOrderToApplyNpr || 200,
+        discountPercentage: 20,
+        minOrderAmountNpr: rule.minOrderToApplyNpr || 100,
         maxDiscountNpr: rule.maxDiscountNpr || 1000,
         status: 'available' as const,
         expiresAt,
@@ -1038,14 +1016,14 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
       };
       db.coupons = db.coupons || [];
       db.coupons.unshift(newCoupon);
-      awardedCouponInfo = { code: newCode, discountPercentage, level };
+      awardedCouponInfo = { code: newCode, discountPercentage: 20 };
 
       db.notifications = db.notifications || [];
       db.notifications.unshift({
         id: `notif_cpn_${Date.now()}`,
         recipientUserId: currentUser?.id || 'user_cust_1',
-        title: '🎟️ Next Purchase Cashback Coupon Awarded!',
-        message: `Your order #${orderNumber} unlocked a Level ${level} Cashback Coupon (${discountPercentage}% OFF)! Use coupon code "${newCode}" on your next purchase (valid ${validityDays} days).`,
+        title: '🎟️ 20% Cashback Coupon Awarded!',
+        message: `Your product purchase #${orderNumber} unlocked an exclusive 20% OFF Cashback Coupon! Use coupon code "${newCode}" on your next order (valid ${validityDays} days).`,
         type: 'cashback',
         read: false,
         createdAt: now
@@ -1249,7 +1227,7 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
             id: `notif_cb_${Date.now()}`,
             recipientUserId: buyer.id,
             title: 'Cashback Credited!',
-            message: `NPR ${itemCashback} cashback credited to your Cashback Wallet for Order #${order.orderNumber}.`,
+            message: `रु ${itemCashback} cashback credited to your Cashback Wallet for Order #${order.orderNumber}.`,
             type: 'cashback',
             read: false,
             createdAt: now
@@ -1294,7 +1272,7 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
             id: `notif_l1_${Date.now()}`,
             recipientUserId: l1Sponsor.id,
             title: 'Level 1 Income Credited!',
-            message: `NPR ${l1Npr} Level 1 commission received from direct referral purchase (Order #${order.orderNumber}).`,
+            message: `रु ${l1Npr} Level 1 commission received from direct referral purchase (Order #${order.orderNumber}).`,
             type: 'commission',
             read: false,
             createdAt: now
@@ -1339,7 +1317,7 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
             id: `notif_l2_${Date.now()}`,
             recipientUserId: l2Sponsor.id,
             title: 'Level 2 Income Credited!',
-            message: `NPR ${l2Npr} Level 2 commission received (Order #${order.orderNumber}).`,
+            message: `रु ${l2Npr} Level 2 commission received (Order #${order.orderNumber}).`,
             type: 'commission',
             read: false,
             createdAt: now
@@ -1384,7 +1362,7 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
             id: `notif_l3_${Date.now()}`,
             recipientUserId: l3Sponsor.id,
             title: 'Level 3 Income Credited!',
-            message: `NPR ${l3Npr} Level 3 commission received (Order #${order.orderNumber}).`,
+            message: `रु ${l3Npr} Level 3 commission received (Order #${order.orderNumber}).`,
             type: 'commission',
             read: false,
             createdAt: now
@@ -1974,7 +1952,7 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     if (coupon.status === 'used') throw new Error('This coupon has already been used on a previous order.');
     if (coupon.expiresAt < now || coupon.status === 'expired') throw new Error('This cashback coupon has expired.');
     if (subtotal < coupon.minOrderAmountNpr) {
-      throw new Error(`Minimum order amount of NPR ${coupon.minOrderAmountNpr} required to apply this coupon.`);
+      throw new Error(`Minimum order amount of रु ${coupon.minOrderAmountNpr} required to apply this coupon.`);
     }
     let discountNpr = Math.round((subtotal * coupon.discountPercentage) / 100);
     if (coupon.maxDiscountNpr && discountNpr > coupon.maxDiscountNpr) discountNpr = coupon.maxDiscountNpr;
@@ -2004,22 +1982,17 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     db.cashbackCouponRule = {
       id: db.cashbackCouponRule?.id || 'rule_cb_default',
       enabled: body.enabled !== undefined ? !!body.enabled : true,
-      title: body.title || '3-Level Purchase Cashback Coupon Engine',
-      level1Percentage: Number(body.level1Percentage) >= 0 ? Number(body.level1Percentage) : 10,
-      level2Percentage: Number(body.level2Percentage) >= 0 ? Number(body.level2Percentage) : 15,
-      level3Percentage: Number(body.level3Percentage) >= 0 ? Number(body.level3Percentage) : 20,
-      level1MinSpendNpr: Number(body.level1MinSpendNpr) >= 0 ? Number(body.level1MinSpendNpr) : 0,
-      level2MinSpendNpr: Number(body.level2MinSpendNpr) >= 0 ? Number(body.level2MinSpendNpr) : 1000,
-      level3MinSpendNpr: Number(body.level3MinSpendNpr) >= 0 ? Number(body.level3MinSpendNpr) : 2500,
+      title: body.title || 'Customer 20% Purchase Cashback Coupon Engine',
+      discountPercentage: Number(body.discountPercentage) > 0 ? Number(body.discountPercentage) : 20,
       validityDays: Number(body.validityDays) > 0 ? Number(body.validityDays) : 30,
-      minOrderToApplyNpr: Number(body.minOrderToApplyNpr) >= 0 ? Number(body.minOrderToApplyNpr) : 200,
+      minOrderToApplyNpr: Number(body.minOrderToApplyNpr) >= 0 ? Number(body.minOrderToApplyNpr) : 100,
       maxDiscountNpr: body.maxDiscountNpr ? Number(body.maxDiscountNpr) : 1000,
       updatedAt: new Date().toISOString()
     };
     saveLocalDatabase(db);
     return {
       success: true,
-      message: '3-Level Cashback Coupon settings updated successfully',
+      message: '20% Customer Cashback Coupon settings updated successfully',
       rule: db.cashbackCouponRule
     } as unknown as T;
   }
@@ -2048,9 +2021,8 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
     if (!targetUser && targetUserId !== 'all') {
       targetUser = db.users.find(u => u.role === 'customer');
     }
-    const lvl = (Number(level) === 1 || Number(level) === 2 || Number(level) === 3) ? (Number(level) as 1 | 2 | 3) : 1;
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const code = customCode?.trim().toUpperCase() || `JKM-ADMIN-L${lvl}-${randomSuffix}`;
+    const code = customCode?.trim().toUpperCase() || `JKM-CB20-${randomSuffix}`;
     const now = new Date();
     const days = Number(validityDays) || 30;
     const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -2062,9 +2034,8 @@ export function handleLocalFallbackRequest<T>(endpoint: string, options: Request
       userMobile: targetUser ? targetUser.mobile : 'All',
       sourceOrderId: 'admin_manual',
       sourceOrderNumber: 'ADMIN-PROMO',
-      level: lvl,
-      discountPercentage: Number(discountPercentage) || 10,
-      minOrderAmountNpr: Number(minOrderAmountNpr) || 200,
+      discountPercentage: Number(discountPercentage) || 20,
+      minOrderAmountNpr: Number(minOrderAmountNpr) || 100,
       maxDiscountNpr: maxDiscountNpr ? Number(maxDiscountNpr) : 1000,
       status: 'available',
       expiresAt,

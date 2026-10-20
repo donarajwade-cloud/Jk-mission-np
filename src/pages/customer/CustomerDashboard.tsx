@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../services/api.ts';
 import { formatNPR, formatNepaliDate, formatNepalMobile } from '../../utils/format.ts';
@@ -17,6 +17,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { WalletCardUI } from '../../components/common/WalletCardUI.tsx';
+import { ReferralShareBox } from '../../components/common/ReferralShareBox.tsx';
+import { TransactionHistoryCardView, TransactionCardItem } from '../../components/common/TransactionHistoryCardView.tsx';
 
 interface CustomerDashboardProps {
   onNavigate: (view: string, param?: string) => void;
@@ -77,6 +79,32 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 
   const wallet = walletData?.wallet || customerWallet;
 
+  // Recent transactions list in floating card format matching screenshot
+  const recentTransactions: TransactionCardItem[] = useMemo(() => {
+    const cb = (walletData?.cashbackHistory || []).map((c: any) => ({
+      id: `cb-${c.id}`,
+      title: c.productName || 'Customer Cashback Award',
+      category: 'cashback' as const,
+      date: c.createdAt,
+      amountNpr: c.amountNpr,
+      type: c.type === 'debit' ? 'debit' as const : 'credit' as const,
+      orderNumber: c.orderNumber,
+      status: 'Settled'
+    }));
+    const inc = (walletData?.referralIncomeHistory || []).map((r: any) => ({
+      id: `inc-${r.id}`,
+      title: r.description || `Level ${r.referralLevel || 1} Referral Bonus`,
+      category: 'salary' as const,
+      date: r.createdAt,
+      amountNpr: r.amountNpr,
+      type: 'credit' as const,
+      orderNumber: r.orderNumber,
+      status: 'Withdrawable'
+    }));
+    const combined = [...cb, ...inc];
+    return combined.slice(0, 10);
+  }, [walletData]);
+
   return (
     <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {loadError && (
@@ -133,6 +161,14 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
         </div>
       </div>
 
+      {/* Dedicated Referral Share Link Box */}
+      {user && (
+        <ReferralShareBox
+          referralId={user.referralId}
+          userName={user.name}
+        />
+      )}
+
       {/* Two Strictly Separated Digital Wallet Cards */}
       <div className="space-y-3">
         <div className="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
@@ -187,26 +223,26 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
         </div>
       </div>
 
-      {/* 3-Level Cashback Coupons Showcase Card */}
+      {/* 20% Buyer Cashback Coupons Showcase Card */}
       <div className="bg-linear-to-r from-amber-500 via-amber-400 to-amber-300 rounded-3xl p-6 sm:p-7 text-slate-950 shadow-md border border-amber-300 flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="space-y-1.5 max-w-xl">
           <div className="flex items-center space-x-2">
             <span className="px-2 py-0.5 rounded-full bg-slate-950 text-amber-400 font-black text-[10px] uppercase tracking-wider flex items-center space-x-1">
               <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>Automated 3-Level Rewards</span>
+              <span>20% Buyer Cashback Reward</span>
             </span>
             <span className="text-xs font-black text-amber-950">
               {availableCouponsCount > 0
                 ? `${availableCouponsCount} Active Coupon(s) Available`
-                : 'Earn On Every Order'}
+                : 'Direct 20% On Every Product Buy'}
             </span>
           </div>
 
           <h3 className="text-xl font-black text-slate-950">
-            Next-Purchase Cashback Coupons
+            20% Customer Cashback Coupons
           </h3>
           <p className="text-xs font-medium text-slate-900/90 leading-relaxed">
-            Every product purchase automatically generates a 3-Level Cashback Coupon ({couponRule?.level1Percentage || 10}% - {couponRule?.level3Percentage || 20}% OFF) for your next order, configured directly by administration.
+            Jo customer product buy karta hai, use automatic 20% Cashback Coupon milta hai next order ke liye (Sirf product khareedne wale customer ko 20% cashback coupon milta hai).
           </p>
         </div>
 
@@ -324,6 +360,15 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Transaction History Card View matching Screenshot UI */}
+      <div className="bg-slate-50/60 p-4 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs">
+        <TransactionHistoryCardView
+          title="Transaction History"
+          showCloseButton={false}
+          transactions={recentTransactions}
+        />
       </div>
     </div>
   );

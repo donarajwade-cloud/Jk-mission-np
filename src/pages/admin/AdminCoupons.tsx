@@ -22,15 +22,10 @@ export const AdminCoupons: React.FC = () => {
   const [rule, setRule] = useState<CashbackCouponRule>({
     id: 'rule_cb_default',
     enabled: true,
-    title: '3-Level Purchase Cashback Coupon Engine',
-    level1Percentage: 10,
-    level2Percentage: 15,
-    level3Percentage: 20,
-    level1MinSpendNpr: 0,
-    level2MinSpendNpr: 1000,
-    level3MinSpendNpr: 2500,
+    title: 'Customer 20% Purchase Cashback Coupon Engine',
+    discountPercentage: 20,
     validityDays: 30,
-    minOrderToApplyNpr: 200,
+    minOrderToApplyNpr: 100,
     maxDiscountNpr: 1000,
     updatedAt: new Date().toISOString()
   });
@@ -52,10 +47,9 @@ export const AdminCoupons: React.FC = () => {
   const [customModalOpen, setCustomModalOpen] = useState(false);
   const [customers, setCustomers] = useState<User[]>([]);
   const [targetUserId, setTargetUserId] = useState('all');
-  const [customLevel, setCustomLevel] = useState<1 | 2 | 3>(1);
-  const [customPercentage, setCustomPercentage] = useState(15);
+  const [customPercentage, setCustomPercentage] = useState(20);
   const [customValidity, setCustomValidity] = useState(30);
-  const [customMinOrder, setCustomMinOrder] = useState(200);
+  const [customMinOrder, setCustomMinOrder] = useState(100);
   const [customCode, setCustomCode] = useState('');
   const [customLoading, setCustomLoading] = useState(false);
 
@@ -109,7 +103,6 @@ export const AdminCoupons: React.FC = () => {
       const res = await api.createCustomCoupon({
         targetUserId,
         discountPercentage: Number(customPercentage),
-        level: customLevel,
         validityDays: Number(customValidity),
         minOrderAmountNpr: Number(customMinOrder),
         customCode: customCode.trim() || undefined
@@ -148,10 +141,10 @@ export const AdminCoupons: React.FC = () => {
             Automated Reward Architecture
           </span>
           <h1 className="text-3xl font-black text-slate-950 mt-0.5">
-            3-Level Cashback Coupons Engine
+            Customer 20% Cashback Coupons Engine
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Configure automatic percentage cashback coupons awarded to customers upon product purchase for their next orders.
+            Automatic 20% cashback coupon configuration for customers purchasing products. Sirf product buy karne wale customer ko 20% cashback coupon milta hai (3-level distribution removed).
           </p>
         </div>
 
@@ -184,7 +177,7 @@ export const AdminCoupons: React.FC = () => {
         </div>
       </div>
 
-      {/* Section 1: 3-Level Rules Configuration Card */}
+      {/* Section 1: 20% Buyer Coupon Rules Configuration Card */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="flex items-center space-x-3">
@@ -192,8 +185,8 @@ export const AdminCoupons: React.FC = () => {
               <Sliders className="w-5 h-5 text-amber-700" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">Admin 3-Level Coupon Rule Settings</h2>
-              <p className="text-xs text-slate-500">Define the exact discount percentages and qualification tiers for automatic coupon generation</p>
+              <h2 className="text-base font-extrabold text-slate-900">Customer 20% Purchase Cashback Coupon Settings</h2>
+              <p className="text-xs text-slate-500">Sirf product khareedne wale customer ko 20% cashback coupon milta hai (3-level coupon distribution removed)</p>
             </div>
           </div>
 
@@ -205,131 +198,78 @@ export const AdminCoupons: React.FC = () => {
               className="rounded text-amber-500 focus:ring-amber-400 w-4 h-4"
             />
             <span className="text-xs font-bold text-slate-800">
-              {rule.enabled ? 'Automatic Issuance ON' : 'Automatic Issuance PAUSED'}
+              {rule.enabled ? 'Automatic 20% Issuance ON' : 'Automatic Issuance PAUSED'}
             </span>
           </label>
         </div>
 
         <form onSubmit={handleSaveRule} className="space-y-6">
-          {/* 3 Level Grid */}
+          {/* Direct 20% Buyer Reward Settings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Level 1 */}
+            {/* Box 1: 20% Discount Rate */}
+            <div className="p-5 rounded-2xl bg-amber-50/60 border border-amber-300 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase">
+                  Buyer Cashback
+                </span>
+                <span className="text-xs font-extrabold text-amber-800">Flat Discount</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">Cashback Coupon Discount (%)</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    required
+                    value={rule.discountPercentage || 20}
+                    onChange={(e) => setRule({ ...rule, discountPercentage: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-amber-300 bg-white text-base font-black text-slate-950 focus:outline-none focus:border-amber-500"
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-xs">%</span>
+                </div>
+                <p className="text-[10px] text-amber-900 font-semibold mt-1">Direct 20% OFF coupon unlocked per product purchase</p>
+              </div>
+            </div>
+
+            {/* Box 2: Target Recipient Rule */}
             <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-200/80 text-amber-900 font-extrabold text-[10px] uppercase">
-                  Level 1 Tier
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-extrabold text-[10px] uppercase">
+                  Distribution Rule
                 </span>
-                <span className="text-xs font-bold text-slate-500">Initial / Entry</span>
+                <span className="text-[11px] font-bold text-emerald-600">Active</span>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Coupon Discount (%)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    required
-                    value={rule.level1Percentage}
-                    onChange={(e) => setRule({ ...rule, level1Percentage: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-400"
-                  />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Coupon Recipient</label>
+                <div className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-900">
+                  Purchasing Customer Exclusively
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Min Order to Unlock (NPR)</label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={rule.level1MinSpendNpr}
-                  onChange={(e) => setRule({ ...rule, level1MinSpendNpr: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-400"
-                  placeholder="0"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">Orders up to Level 2 threshold qualify for Level 1 coupon</p>
+                <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
+                  3-Level coupon distribution removed. Sirf wahi customer coupon receive karta hai jo product buy karta hai.
+                </p>
               </div>
             </div>
 
-            {/* Level 2 */}
-            <div className="p-5 rounded-2xl bg-slate-50 border border-amber-200/70 space-y-3">
+            {/* Box 3: Trigger Condition */}
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 font-extrabold text-[10px] uppercase">
-                  Level 2 Tier
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-extrabold text-[10px] uppercase">
+                  Trigger Event
                 </span>
-                <span className="text-xs font-bold text-slate-500">Medium Tier</span>
+                <span className="text-[11px] font-bold text-slate-500">Auto-Generated</span>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Coupon Discount (%)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    required
-                    value={rule.level2Percentage}
-                    onChange={(e) => setRule({ ...rule, level2Percentage: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-400"
-                  />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Issuance Condition</label>
+                <div className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-900">
+                  Every Product Purchase
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Min Order to Unlock (NPR)</label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={rule.level2MinSpendNpr}
-                  onChange={(e) => setRule({ ...rule, level2MinSpendNpr: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-400"
-                  placeholder="1000"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">Orders ≥ NPR {rule.level2MinSpendNpr} qualify for Level 2 coupon</p>
-              </div>
-            </div>
-
-            {/* Level 3 */}
-            <div className="p-5 rounded-2xl bg-slate-50 border border-purple-200/70 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 font-extrabold text-[10px] uppercase">
-                  Level 3 Tier
-                </span>
-                <span className="text-xs font-bold text-slate-500">Premium / High Value</span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Coupon Discount (%)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    required
-                    value={rule.level3Percentage}
-                    onChange={(e) => setRule({ ...rule, level3Percentage: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-400"
-                  />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Min Order to Unlock (NPR)</label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={rule.level3MinSpendNpr}
-                  onChange={(e) => setRule({ ...rule, level3MinSpendNpr: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-400"
-                  placeholder="2500"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">Orders ≥ NPR {rule.level3MinSpendNpr} qualify for Level 3 coupon</p>
+                <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
+                  Order checkout create hote hi automatically unique 20% coupon code generate ho jata hai.
+                </p>
               </div>
             </div>
           </div>
@@ -350,7 +290,7 @@ export const AdminCoupons: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Min Order Total to Redeem (NPR)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Min Order Total to Redeem (रु)</label>
               <input
                 type="number"
                 min="0"
@@ -363,7 +303,7 @@ export const AdminCoupons: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Max Discount Cap (NPR)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Max Discount Cap (रु)</label>
               <input
                 type="number"
                 min="0"
@@ -379,7 +319,7 @@ export const AdminCoupons: React.FC = () => {
             {saveSuccess ? (
               <span className="text-xs font-bold text-emerald-600 flex items-center space-x-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>Rule settings saved successfully! Automatic coupon generation updated.</span>
+                <span>20% Cashback Rule saved successfully!</span>
               </span>
             ) : <span />}
 
@@ -389,7 +329,7 @@ export const AdminCoupons: React.FC = () => {
               className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs flex items-center space-x-2 shadow-xs transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>{saveLoading ? 'Saving Rules...' : 'Save 3-Level Rules'}</span>
+              <span>{saveLoading ? 'Saving Rule...' : 'Save 20% Cashback Rule'}</span>
             </button>
           </div>
         </form>
@@ -442,7 +382,7 @@ export const AdminCoupons: React.FC = () => {
                 <tr>
                   <th className="py-3 px-4">Coupon Code</th>
                   <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4 text-center">Level & Discount</th>
+                  <th className="py-3 px-4 text-center">Discount & Benefit</th>
                   <th className="py-3 px-4">Trigger / Source Order</th>
                   <th className="py-3 px-4">Validity</th>
                   <th className="py-3 px-4">Status & Usage</th>
@@ -461,12 +401,10 @@ export const AdminCoupons: React.FC = () => {
                       <span className="font-mono text-[10px] text-slate-500">{formatNepalMobile(c.userMobile)}</span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black mr-1 ${
-                        c.level === 3 ? 'bg-purple-100 text-purple-900' : c.level === 2 ? 'bg-blue-100 text-blue-900' : 'bg-amber-100 text-amber-900'
-                      }`}>
-                        Level {c.level}
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black mr-1 bg-amber-100 text-amber-950 border border-amber-300">
+                        Buyer Coupon
                       </span>
-                      <strong className="text-amber-600 font-black text-sm">{c.discountPercentage}% OFF</strong>
+                      <strong className="text-amber-600 font-black text-sm">{c.discountPercentage || 20}% OFF</strong>
                     </td>
                     <td className="py-3 px-4">
                       <span className="font-mono text-slate-600 font-bold">#{c.sourceOrderNumber || 'N/A'}</span>
@@ -474,7 +412,7 @@ export const AdminCoupons: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <span className="text-[11px] text-slate-600">Until {formatNepaliDate(c.expiresAt)}</span>
-                      <p className="text-[10px] text-slate-400">Min order: NPR {c.minOrderAmountNpr}</p>
+                      <p className="text-[10px] text-slate-400">Min order: रु {c.minOrderAmountNpr}</p>
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
@@ -488,7 +426,7 @@ export const AdminCoupons: React.FC = () => {
                       </span>
                       {c.status === 'used' && c.usedInOrderNumber && (
                         <p className="text-[10px] text-emerald-700 font-bold mt-0.5">
-                          Order #{c.usedInOrderNumber} (Saved NPR {c.discountAppliedNpr})
+                          Order #{c.usedInOrderNumber} (Saved रु {c.discountAppliedNpr})
                         </p>
                       )}
                     </td>
@@ -509,7 +447,7 @@ export const AdminCoupons: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
                   Admin Action
                 </span>
-                <h3 className="font-black text-slate-950 text-base mt-1">Issue Custom Cashback Coupon</h3>
+                <h3 className="font-black text-slate-950 text-base mt-1">Issue Customer 20% Cashback Coupon</h3>
               </div>
               <button
                 onClick={() => setCustomModalOpen(false)}
@@ -536,22 +474,9 @@ export const AdminCoupons: React.FC = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Level Tier</label>
-                  <select
-                    value={customLevel}
-                    onChange={(e) => setCustomLevel(Number(e.target.value) as 1 | 2 | 3)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-400"
-                  >
-                    <option value={1}>Level 1 Tier</option>
-                    <option value={2}>Level 2 Tier</option>
-                    <option value={3}>Level 3 Tier</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Discount %</label>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Cashback Discount (%)</label>
+                <div className="relative">
                   <input
                     type="number"
                     min="1"
@@ -561,7 +486,9 @@ export const AdminCoupons: React.FC = () => {
                     onChange={(e) => setCustomPercentage(Number(e.target.value))}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:border-amber-400"
                   />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
                 </div>
+                <p className="text-[10px] text-slate-400 mt-1">Default 20% cashback coupon directly to selected customer.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -578,7 +505,7 @@ export const AdminCoupons: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Min Order Amount (NPR)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Min Order Amount (रु)</label>
                   <input
                     type="number"
                     min="0"

@@ -64,7 +64,7 @@ export const PanelNav: React.FC<PanelNavProps> = ({ currentView, onNavigate }) =
     { id: 'admin-shopkeepers', label: 'Shopkeepers', icon: Store },
     { id: 'admin-customers', label: 'Customer Trees', icon: Users },
     { id: 'admin-orders', label: 'Orders & Sales', icon: Package },
-    { id: 'admin-coupons', label: 'Cashback Coupons (3-Level)', icon: Ticket },
+    { id: 'admin-coupons', label: 'Cashback Coupons (20%)', icon: Ticket },
     { id: 'admin-withdrawals', label: 'Withdrawals (15-Day)', icon: CreditCard },
     { id: 'admin-ledgers', label: 'Ledgers & Tax', icon: FileText },
     { id: 'admin-settings', label: 'Platform Config', icon: Settings },

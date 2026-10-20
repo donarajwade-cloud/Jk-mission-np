@@ -3,11 +3,13 @@ import { useAuth } from '../../context/AuthContext.tsx';
 import { UserCheck, ShieldCheck, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface RegisterCustomerPageProps {
+  initialSponsor?: string;
   onSuccess: () => void;
   onNavigateLogin: () => void;
 }
 
 export const RegisterCustomerPage: React.FC<RegisterCustomerPageProps> = ({
+  initialSponsor,
   onSuccess,
   onNavigateLogin
 }) => {
@@ -18,9 +20,9 @@ export const RegisterCustomerPage: React.FC<RegisterCustomerPageProps> = ({
   const [sponsorReferralMobile, setSponsorReferralMobile] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      return params.get('ref') || params.get('sponsor') || '';
+      return initialSponsor || params.get('ref') || params.get('sponsor') || '';
     } catch {
-      return '';
+      return initialSponsor || '';
     }
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -112,9 +114,16 @@ export const RegisterCustomerPage: React.FC<RegisterCustomerPageProps> = ({
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Referral Sponsor Mobile Number (Optional)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-bold text-slate-700">
+                Referral Sponsor Mobile Number (Optional)
+              </label>
+              {sponsorReferralMobile && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center space-x-1">
+                  <span>✓ Sponsor Linked from Referral Link</span>
+                </span>
+              )}
+            </div>
             <input
               type="text"
               value={sponsorReferralMobile}

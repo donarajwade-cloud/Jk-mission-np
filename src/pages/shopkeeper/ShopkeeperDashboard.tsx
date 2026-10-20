@@ -12,9 +12,9 @@ import {
   Plus,
   Clock,
   CheckCircle2,
-  CreditCard,
-  Wifi
+  CreditCard
 } from 'lucide-react';
+import { WalletCardUI } from '../../components/common/WalletCardUI.tsx';
 
 interface ShopkeeperDashboardProps {
   onNavigate: (view: string, param?: string) => void;
@@ -61,7 +61,7 @@ export const ShopkeeperDashboard: React.FC<ShopkeeperDashboardProps> = ({ onNavi
       <div className="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-200 rounded-3xl p-6 sm:p-8 border border-amber-300 text-slate-950 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <span className="px-2.5 py-0.5 rounded-md bg-slate-950 text-amber-300 text-[10px] font-black uppercase tracking-wider">
-            Verified Merchant Panel
+            Shopkeeper Partner Portal
           </span>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
             {shop?.name || user?.name}
@@ -72,11 +72,11 @@ export const ShopkeeperDashboard: React.FC<ShopkeeperDashboardProps> = ({ onNavi
         </div>
 
         <button
-          onClick={() => onNavigate('shopkeeper-products')}
+          onClick={() => onNavigate('shopkeeper-products', 'create')}
           className="px-5 py-3 rounded-2xl bg-slate-950 hover:bg-slate-800 text-amber-300 font-black text-xs flex items-center space-x-2 shadow-md transition-all self-start md:self-auto shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Submit New Product</span>
+          <span>Upload Product (Full Page)</span>
         </button>
       </div>
 
@@ -97,25 +97,18 @@ export const ShopkeeperDashboard: React.FC<ShopkeeperDashboardProps> = ({ onNavi
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Merchant Commission Digital Card Summary */}
-        <div 
-          onClick={() => onNavigate('shopkeeper-wallet')}
-          className="bg-gradient-to-br from-blue-950 via-indigo-950 to-slate-950 p-6 rounded-3xl border border-sky-400/30 shadow-lg text-white space-y-2 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all"
-        >
-          <div className="absolute top-0 right-0 w-28 h-28 bg-sky-500/10 rounded-full blur-xl pointer-events-none" />
-          <div className="flex items-center justify-between text-sky-300">
-            <div className="flex items-center space-x-1.5">
-              <div className="w-5 h-3.5 rounded-xs bg-amber-400/80 border border-amber-200/50" />
-              <span className="text-[10px] font-black uppercase tracking-wider">Merchant Card</span>
-            </div>
-            <Wifi className="w-3.5 h-3.5 rotate-90 text-sky-400/70" />
-          </div>
-          <p className="text-2xl font-black text-white">{formatNPR(wallet?.availableCommissionNpr)}</p>
-          <div className="flex items-center justify-between text-[11px] text-sky-200/70 pt-1 border-t border-white/10">
-            <span>Earned: {formatNPR(wallet?.totalEarnedNpr)}</span>
-            <span className="text-amber-300 font-bold group-hover:underline">Manage Card &rarr;</span>
-          </div>
-        </div>
+        {/* Merchant Commission Digital Card Summary matching Screenshot UI */}
+        <WalletCardUI
+          type="shopkeeper"
+          title="AVAILABLE SALES COMMISSION"
+          balanceNpr={wallet?.availableCommissionNpr || 0}
+          subtitle={`Earned: रु ${Number(wallet?.totalEarnedNpr || 0).toLocaleString('en-US')}`}
+          watermark="store"
+          onSelect={() => onNavigate('shopkeeper-wallet')}
+          actionLabel="Manage Wallet &rarr;"
+          onAction={() => onNavigate('shopkeeper-wallet')}
+          className="col-span-1"
+        />
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-400">

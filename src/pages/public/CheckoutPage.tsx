@@ -231,7 +231,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+    <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Back Button */}
       <button
         onClick={onBack}
@@ -323,7 +323,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
           {/* Payment Method */}
           <div className="bg-white p-6 rounded-3xl border border-slate-200 space-y-4">
-            <h3 className="font-extrabold text-slate-900 text-base">2. Payment Method (NPR)</h3>
+            <h3 className="font-extrabold text-slate-900 text-base">2. Payment Method (रु)</h3>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               {[
@@ -379,7 +379,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               {paymentMethod === 'cash_on_delivery' && (
                 <div>
                   <p className="font-bold text-slate-800">Cash on Delivery (COD):</p>
-                  <p className="text-slate-600">Pay cash in NPR upon delivery to your doorstep.</p>
+                  <p className="text-slate-600">Pay cash in Nepali currency (रु) upon delivery to your doorstep.</p>
                 </div>
               )}
 
@@ -437,7 +437,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   <div className="space-y-0.5">
                     <div className="flex items-center space-x-1.5">
                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
-                        Level {appliedCoupon.level} Coupon Applied
+                        {appliedCoupon.discountPercentage}% Cashback Coupon Applied
                       </span>
                       <span className="font-mono text-xs font-black text-slate-900">
                         {appliedCoupon.code}
@@ -467,7 +467,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         setCouponInput(e.target.value);
                         setCouponError(null);
                       }}
-                      placeholder="Enter Coupon Code (e.g. JKMCB-L1-...)"
+                      placeholder="Enter Coupon Code (e.g. JKM-CB20-...)"
                       className="grow px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-mono uppercase font-bold text-slate-900 placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-amber-400"
                     />
                     <button

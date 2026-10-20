@@ -397,7 +397,7 @@ export const api = {
   markAllNotificationsRead: () =>
     request<{ success: boolean }>('/api/notifications/mark-all-read', { method: 'PUT' }),
 
-  // 3-Level Cashback Coupons
+  // Customer 20% Cashback Coupons
   getMyCoupons: () =>
     request<{ success: boolean; coupons: CashbackCoupon[]; rule: CashbackCouponRule }>('/api/coupons/my-coupons'),
 
@@ -444,7 +444,7 @@ export const api = {
   createCustomCoupon: (payload: {
     targetUserId: string;
     discountPercentage: number;
-    level: 1 | 2 | 3;
+    level?: 1 | 2 | 3;
     minOrderAmountNpr?: number;
     maxDiscountNpr?: number;
     validityDays?: number;

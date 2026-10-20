@@ -118,7 +118,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   <th className="py-2.5 px-4">Item & Merchant</th>
                   <th className="py-2.5 px-3 text-center">Qty</th>
                   <th className="py-2.5 px-4 text-right">Unit Price</th>
-                  <th className="py-2.5 px-4 text-right">Total (NPR)</th>
+                  <th className="py-2.5 px-4 text-right">Total (रु)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -181,7 +181,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   <span>Next-Purchase Cashback Voucher Awarded</span>
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-400 text-slate-950">
-                  Level {order.awardedCoupon.level} Tier
+                  Buyer 20% Cashback Coupon
                 </span>
               </div>
               <div className="flex items-center justify-between pt-1">
